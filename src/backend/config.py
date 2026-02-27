@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-# config.py - Konfigurasi aplikasi backend
-# Contoh: koneksi database, secret key, environment variables
-=======
 import os
 from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
 
 # Load environment variables from .env file
 load_dotenv()
@@ -21,4 +18,6 @@ DB_CONFIG = {
 APP_PORT = int(os.getenv('APP_PORT', 5000))
 APP_DEBUG = os.getenv('APP_DEBUG', 'true').lower() == 'true'
 SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
->>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
+
+# Initialize SQLAlchemy
+db = SQLAlchemy()
