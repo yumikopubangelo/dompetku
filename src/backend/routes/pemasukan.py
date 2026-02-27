@@ -1,6 +1,6 @@
-<<<<<<< HEAD
+
 # Route / endpoint API untuk fitur Pemasukan
-=======
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from services.pemasukan_service import get_pemasukan, create_pemasukan, update_pemasukan, delete_pemasukan
@@ -39,4 +39,4 @@ def delete_pemasukan_route(id):
     if success:
         return jsonify({'message': 'Pemasukan deleted successfully'}), 200
     return jsonify({'error': 'Pemasukan not found'}), 404
->>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
+
