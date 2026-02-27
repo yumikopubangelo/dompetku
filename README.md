@@ -1,24 +1,22 @@
-<<<<<<< HEAD
+
 # Dompetku 💰
 
 Aplikasi pencatatan keuangan pribadi sederhana.
 
 ## Fitur
 - Pencatatan pemasukan & pengeluaran
-=======
+
 # Dompetku
 
 Aplikasi pencatatan keuangan pribadi berbasis web.
 
 ## Fitur
 - Pencatatan pemasukan dan pengeluaran
->>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
 - Pengelompokan transaksi berdasarkan kategori
 - Perhitungan saldo otomatis
 - Rekap keuangan bulanan
 - Ringkasan statistik keuangan
-
-<<<<<<< HEAD
+- 
 ## Struktur Proyek
 - `src/backend/`  : Kode sumber backend (Python)
 - `src/frontend/` : Kode sumber frontend (TBD)
@@ -73,4 +71,4 @@ python src/backend/main.py
 ## Dependensi
 - Python dependencies: [requirements.txt](requirements.txt)
 - Catatan frontend Python: [src/frontend/README.md](src/frontend/README.md)
->>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
+

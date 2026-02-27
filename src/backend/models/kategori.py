@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# Model data untuk entitas Kategori
-=======
+
 from config import db
 from datetime import datetime
 
@@ -14,4 +12,4 @@ class Kategori(db.Model):
     
     def __repr__(self):
         return f"<Kategori {self.nama}>"
->>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
+

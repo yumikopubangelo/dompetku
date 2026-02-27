@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# Business logic untuk fitur Kategori
-=======
+
 from models.kategori import Kategori
 from config import db
 
@@ -55,4 +53,4 @@ def delete_kategori(id):
         db.session.rollback()
         print(f"Error deleting category: {e}")
         return False
->>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
+
