@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# Business logic untuk fitur Pemasukan
-=======
+
 from models.pemasukan import Pemasukan
 from config import db
 
@@ -64,4 +62,4 @@ def delete_pemasukan(id):
         db.session.rollback()
         print(f"Error deleting income: {e}")
         return False
->>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
+
