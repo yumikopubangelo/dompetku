@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# Route / endpoint API untuk fitur Kategori
-=======
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from services.kategori_service import get_kategori, create_kategori, update_kategori, delete_kategori
@@ -39,4 +37,4 @@ def delete_kategori_route(id):
     if success:
         return jsonify({'message': 'Kategori deleted successfully'}), 200
     return jsonify({'error': 'Kategori not found'}), 404
->>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
+
