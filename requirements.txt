@@ -1,6 +1,39 @@
+<<<<<<< HEAD
 # Backend Python dependencies
 # Tambahkan library yang dibutuhkan di sini
 # Contoh:
 # flask==3.0.0
 # sqlalchemy==2.0.0
 # pytest==8.0.0
+=======
+# ============================================================
+#  Dompetku - Backend Dependencies
+#  Arsitektur: REST API (Flask) + MySQL
+# ============================================================
+
+# --- Core Framework ---
+Flask>=3.0,<4.0
+
+# --- Database ---
+Flask-SQLAlchemy>=3.1,<4.0       # ORM integration dengan Flask
+Flask-Migrate>=4.0,<5.0          # Migrasi skema database
+SQLAlchemy>=2.0,<3.0             # ORM utama
+PyMySQL>=1.1,<2.0                # Driver koneksi ke MySQL (WAJIB!)
+
+# --- API & Validasi ---
+marshmallow>=3.21,<4.0           # Serialisasi & validasi data request/response
+Flask-CORS>=4.0,<5.0             # Izinkan request dari frontend (beda port/domain)
+
+# --- Autentikasi ---
+Flask-JWT-Extended>=4.6,<5.0    # Autentikasi berbasis token (JWT)
+
+# --- Environment ---
+python-dotenv>=1.0,<2.0          # Baca file .env
+
+# --- Production Server ---
+gunicorn>=22.0,<23.0             # Server WSGI untuk production
+
+# --- Testing ---
+pytest>=8.0,<9.0                 # Framework testing
+pytest-cov>=5.0,<6.0             # Laporan code coverage
+>>>>>>> 4631ec9 (chore: initialize project structure with src, tests, docs, and configuration)
