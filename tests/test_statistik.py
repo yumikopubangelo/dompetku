@@ -1,9 +1,9 @@
-"""Unit test untuk fitur Statistik Keuangan (service + route)."""
+﻿"""Unit test untuk fitur Statistik Keuangan (service + route)."""
 
 from types import SimpleNamespace
 
 import pytest
-import services.statistik_service as statistik_service
+import src.backend.services.statistik_service as statistik_service
 
 
 # Field palsu agar API `label()` bisa dipakai di ekspresi query SQLAlchemy.
@@ -90,7 +90,7 @@ def _build_statistik_queries(
 
 def _build_statistik_client(flask_app):
     """Mendaftarkan blueprint statistik ke app test."""
-    from routes.statistik import statistik_bp
+    from src.backend.routes.statistik import statistik_bp
 
     flask_app.register_blueprint(statistik_bp, url_prefix="/api/statistik")
     return flask_app.test_client()
@@ -175,7 +175,7 @@ def test_get_statistik_keuangan_service_raises_on_error(monkeypatch):
 
 # ---------- Route tests ----------
 def test_get_statistik_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.statistik as statistik_route
+    import src.backend.routes.statistik as statistik_route
 
     monkeypatch.setattr(
         statistik_route,
@@ -191,7 +191,7 @@ def test_get_statistik_route_returns_200(flask_app, bypass_jwt, monkeypatch):
 
 
 def test_get_statistik_route_passes_none_when_no_year(flask_app, bypass_jwt, monkeypatch):
-    import routes.statistik as statistik_route
+    import src.backend.routes.statistik as statistik_route
 
     captured = {}
 
@@ -218,7 +218,7 @@ def test_get_statistik_route_returns_500_on_invalid_year(flask_app, bypass_jwt):
 
 
 def test_get_statistik_route_returns_500_when_service_error(flask_app, bypass_jwt, monkeypatch):
-    import routes.statistik as statistik_route
+    import src.backend.routes.statistik as statistik_route
 
     def _raise_error(_tahun=None):
         raise RuntimeError("service gagal")
@@ -230,3 +230,6 @@ def test_get_statistik_route_returns_500_when_service_error(flask_app, bypass_jw
 
     assert resp.status_code == 500
     assert "service gagal" in resp.get_json()["error"]
+
+
+
