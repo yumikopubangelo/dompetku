@@ -1,8 +1,8 @@
-"""Unit test untuk fitur Pemasukan (service + route)."""
+﻿"""Unit test untuk fitur Pemasukan (service + route)."""
 
 from types import SimpleNamespace
 
-import services.pemasukan_service as pemasukan_service
+import src.backend.services.pemasukan_service as pemasukan_service
 
 
 # Spy session untuk memverifikasi add/commit/delete/rollback pada service.
@@ -31,7 +31,7 @@ class SessionSpy:
 
 def _build_pemasukan_client(flask_app):
     """Mendaftarkan blueprint pemasukan ke app test."""
-    from routes.pemasukan import pemasukan_bp
+    from src.backend.routes.pemasukan import pemasukan_bp
 
     flask_app.register_blueprint(pemasukan_bp, url_prefix="/api/pemasukan")
     return flask_app.test_client()
@@ -189,7 +189,7 @@ def test_delete_pemasukan_service_not_found(monkeypatch):
 
 # ---------- Route tests ----------
 def test_get_pemasukan_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.pemasukan as pemasukan_route
+    import src.backend.routes.pemasukan as pemasukan_route
 
     monkeypatch.setattr(pemasukan_route, "get_pemasukan", lambda: [{"id": 1, "jumlah": "100"}])
     client = _build_pemasukan_client(flask_app)
@@ -210,7 +210,7 @@ def test_create_pemasukan_route_returns_400_for_empty_payload(flask_app, bypass_
 
 
 def test_create_pemasukan_route_returns_201(flask_app, bypass_jwt, monkeypatch):
-    import routes.pemasukan as pemasukan_route
+    import src.backend.routes.pemasukan as pemasukan_route
 
     monkeypatch.setattr(
         pemasukan_route,
@@ -226,7 +226,7 @@ def test_create_pemasukan_route_returns_201(flask_app, bypass_jwt, monkeypatch):
 
 
 def test_update_pemasukan_route_returns_404_when_not_found(flask_app, bypass_jwt, monkeypatch):
-    import routes.pemasukan as pemasukan_route
+    import src.backend.routes.pemasukan as pemasukan_route
 
     monkeypatch.setattr(pemasukan_route, "update_pemasukan", lambda _id, _data: None)
     client = _build_pemasukan_client(flask_app)
@@ -238,7 +238,7 @@ def test_update_pemasukan_route_returns_404_when_not_found(flask_app, bypass_jwt
 
 
 def test_delete_pemasukan_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.pemasukan as pemasukan_route
+    import src.backend.routes.pemasukan as pemasukan_route
 
     monkeypatch.setattr(pemasukan_route, "delete_pemasukan", lambda _id: True)
     client = _build_pemasukan_client(flask_app)
@@ -247,3 +247,5 @@ def test_delete_pemasukan_route_returns_200(flask_app, bypass_jwt, monkeypatch):
 
     assert resp.status_code == 200
     assert resp.get_json()["message"] == "Pemasukan deleted successfully"
+
+

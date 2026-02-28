@@ -1,8 +1,8 @@
-"""Unit test untuk fitur Kategori (service + route)."""
+﻿"""Unit test untuk fitur Kategori (service + route)."""
 
 from types import SimpleNamespace
 
-import services.kategori_service as kategori_service
+import src.backend.services.kategori_service as kategori_service
 
 
 # Spy sederhana untuk memantau interaksi ke db.session tanpa database asli.
@@ -31,7 +31,7 @@ class SessionSpy:
 
 def _build_kategori_client(flask_app):
     """Mendaftarkan blueprint kategori ke app test dan mengembalikan test client."""
-    from routes.kategori import kategori_bp
+    from src.backend.routes.kategori import kategori_bp
 
     flask_app.register_blueprint(kategori_bp, url_prefix="/api/kategori")
     return flask_app.test_client()
@@ -170,7 +170,7 @@ def test_delete_kategori_service_not_found(monkeypatch):
 
 # ---------- Route tests ----------
 def test_get_kategori_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.kategori as kategori_route
+    import src.backend.routes.kategori as kategori_route
 
     monkeypatch.setattr(kategori_route, "get_kategori", lambda: [{"id": 1, "nama": "Gaji"}])
     client = _build_kategori_client(flask_app)
@@ -191,7 +191,7 @@ def test_create_kategori_route_returns_400_for_empty_payload(flask_app, bypass_j
 
 
 def test_create_kategori_route_returns_201(flask_app, bypass_jwt, monkeypatch):
-    import routes.kategori as kategori_route
+    import src.backend.routes.kategori as kategori_route
 
     monkeypatch.setattr(
         kategori_route,
@@ -207,7 +207,7 @@ def test_create_kategori_route_returns_201(flask_app, bypass_jwt, monkeypatch):
 
 
 def test_update_kategori_route_returns_404_when_not_found(flask_app, bypass_jwt, monkeypatch):
-    import routes.kategori as kategori_route
+    import src.backend.routes.kategori as kategori_route
 
     monkeypatch.setattr(kategori_route, "update_kategori", lambda _id, _data: None)
     client = _build_kategori_client(flask_app)
@@ -219,7 +219,7 @@ def test_update_kategori_route_returns_404_when_not_found(flask_app, bypass_jwt,
 
 
 def test_delete_kategori_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.kategori as kategori_route
+    import src.backend.routes.kategori as kategori_route
 
     monkeypatch.setattr(kategori_route, "delete_kategori", lambda _id: True)
     client = _build_kategori_client(flask_app)
@@ -228,3 +228,4 @@ def test_delete_kategori_route_returns_200(flask_app, bypass_jwt, monkeypatch):
 
     assert resp.status_code == 200
     assert resp.get_json()["message"] == "Kategori deleted successfully"
+
