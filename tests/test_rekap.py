@@ -1,9 +1,9 @@
-"""Unit test untuk fitur Rekap Bulanan (service + route)."""
+﻿"""Unit test untuk fitur Rekap Bulanan (service + route)."""
 
 from types import SimpleNamespace
 
 import pytest
-import services.rekap_service as rekap_service
+import src.backend.services.rekap_service as rekap_service
 
 
 # Field palsu agar ekspresi `label()` pada query bisa dipanggil.
@@ -65,7 +65,7 @@ class SequenceSession:
 
 def _build_rekap_client(flask_app):
     """Mendaftarkan blueprint rekap ke app test."""
-    from routes.rekap import rekap_bp
+    from src.backend.routes.rekap import rekap_bp
 
     flask_app.register_blueprint(rekap_bp, url_prefix="/api/rekap")
     return flask_app.test_client()
@@ -135,7 +135,7 @@ def test_get_rekap_bulanan_route_returns_400_when_params_missing(flask_app, bypa
 
 
 def test_get_rekap_bulanan_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.rekap as rekap_route
+    import src.backend.routes.rekap as rekap_route
 
     monkeypatch.setattr(
         rekap_route,
@@ -160,7 +160,7 @@ def test_get_rekap_bulanan_route_returns_500_on_invalid_number(flask_app, bypass
 
 
 def test_get_rekap_bulanan_route_returns_500_when_service_error(flask_app, bypass_jwt, monkeypatch):
-    import routes.rekap as rekap_route
+    import src.backend.routes.rekap as rekap_route
 
     def _raise_error(_bulan, _tahun):
         raise RuntimeError("service gagal")
@@ -172,3 +172,5 @@ def test_get_rekap_bulanan_route_returns_500_when_service_error(flask_app, bypas
 
     assert resp.status_code == 500
     assert "service gagal" in resp.get_json()["error"]
+
+

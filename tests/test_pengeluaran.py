@@ -1,8 +1,8 @@
-"""Unit test untuk fitur Pengeluaran (service + route)."""
+﻿"""Unit test untuk fitur Pengeluaran (service + route)."""
 
 from types import SimpleNamespace
 
-import services.pengeluaran_service as pengeluaran_service
+import src.backend.services.pengeluaran_service as pengeluaran_service
 
 
 # Spy session untuk mensimulasikan perilaku transaksi database.
@@ -31,7 +31,7 @@ class SessionSpy:
 
 def _build_pengeluaran_client(flask_app):
     """Mendaftarkan blueprint pengeluaran ke app test."""
-    from routes.pengeluaran import pengeluaran_bp
+    from src.backend.routes.pengeluaran import pengeluaran_bp
 
     flask_app.register_blueprint(pengeluaran_bp, url_prefix="/api/pengeluaran")
     return flask_app.test_client()
@@ -189,7 +189,7 @@ def test_delete_pengeluaran_service_not_found(monkeypatch):
 
 # ---------- Route tests ----------
 def test_get_pengeluaran_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.pengeluaran as pengeluaran_route
+    import src.backend.routes.pengeluaran as pengeluaran_route
 
     monkeypatch.setattr(pengeluaran_route, "get_pengeluaran", lambda: [{"id": 1, "jumlah": "100"}])
     client = _build_pengeluaran_client(flask_app)
@@ -210,7 +210,7 @@ def test_create_pengeluaran_route_returns_400_for_empty_payload(flask_app, bypas
 
 
 def test_create_pengeluaran_route_returns_201(flask_app, bypass_jwt, monkeypatch):
-    import routes.pengeluaran as pengeluaran_route
+    import src.backend.routes.pengeluaran as pengeluaran_route
 
     monkeypatch.setattr(
         pengeluaran_route,
@@ -226,7 +226,7 @@ def test_create_pengeluaran_route_returns_201(flask_app, bypass_jwt, monkeypatch
 
 
 def test_update_pengeluaran_route_returns_404_when_not_found(flask_app, bypass_jwt, monkeypatch):
-    import routes.pengeluaran as pengeluaran_route
+    import src.backend.routes.pengeluaran as pengeluaran_route
 
     monkeypatch.setattr(pengeluaran_route, "update_pengeluaran", lambda _id, _data: None)
     client = _build_pengeluaran_client(flask_app)
@@ -238,7 +238,7 @@ def test_update_pengeluaran_route_returns_404_when_not_found(flask_app, bypass_j
 
 
 def test_delete_pengeluaran_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.pengeluaran as pengeluaran_route
+    import src.backend.routes.pengeluaran as pengeluaran_route
 
     monkeypatch.setattr(pengeluaran_route, "delete_pengeluaran", lambda _id: True)
     client = _build_pengeluaran_client(flask_app)
@@ -247,3 +247,5 @@ def test_delete_pengeluaran_route_returns_200(flask_app, bypass_jwt, monkeypatch
 
     assert resp.status_code == 200
     assert resp.get_json()["message"] == "Pengeluaran deleted successfully"
+
+
