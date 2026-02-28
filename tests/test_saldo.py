@@ -1,9 +1,9 @@
-"""Unit test untuk fitur Saldo (service + route)."""
+﻿"""Unit test untuk fitur Saldo (service + route)."""
 
 from types import SimpleNamespace
 
 import pytest
-import services.saldo_service as saldo_service
+import src.backend.services.saldo_service as saldo_service
 
 
 # Query palsu untuk mengembalikan nilai aggregate scalar.
@@ -36,7 +36,7 @@ class DummyFunc:
 
 def _build_saldo_client(flask_app):
     """Mendaftarkan blueprint saldo ke app test."""
-    from routes.saldo import saldo_bp
+    from src.backend.routes.saldo import saldo_bp
 
     flask_app.register_blueprint(saldo_bp, url_prefix="/api/saldo")
     return flask_app.test_client()
@@ -81,7 +81,7 @@ def test_get_saldo_akhir_service_raises_on_query_error(monkeypatch):
 
 # ---------- Route tests ----------
 def test_get_saldo_route_returns_200(flask_app, bypass_jwt, monkeypatch):
-    import routes.saldo as saldo_route
+    import src.backend.routes.saldo as saldo_route
 
     monkeypatch.setattr(saldo_route, "get_saldo_akhir", lambda: 888000)
     client = _build_saldo_client(flask_app)
@@ -93,7 +93,7 @@ def test_get_saldo_route_returns_200(flask_app, bypass_jwt, monkeypatch):
 
 
 def test_get_saldo_route_returns_500_when_service_error(flask_app, bypass_jwt, monkeypatch):
-    import routes.saldo as saldo_route
+    import src.backend.routes.saldo as saldo_route
 
     def _raise_error():
         raise RuntimeError("service gagal")
@@ -105,3 +105,5 @@ def test_get_saldo_route_returns_500_when_service_error(flask_app, bypass_jwt, m
 
     assert resp.status_code == 500
     assert "service gagal" in resp.get_json()["error"]
+
+
