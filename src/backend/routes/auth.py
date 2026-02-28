@@ -1,4 +1,4 @@
-"""Route API untuk autentikasi user (login/logout)."""
+﻿"""Route API untuk autentikasi user (login/logout)."""
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, jwt_required
@@ -40,3 +40,4 @@ def logout_route():
     jti = get_jwt()["jti"]
     revoke_token(jti)
     return jsonify({"message": "Logout berhasil"}), 200
+
