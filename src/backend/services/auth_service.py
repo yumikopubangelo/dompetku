@@ -1,4 +1,4 @@
-"""Business logic untuk fitur autentikasi login/logout."""
+﻿"""Business logic untuk fitur autentikasi login/logout."""
 
 from flask_jwt_extended import create_access_token, create_refresh_token
 
@@ -44,3 +44,4 @@ def revoke_token(jti):
 def is_token_revoked(jti):
     """Mengecek apakah token JWT sudah masuk daftar revoke."""
     return jti in REVOKED_TOKEN_JTI
+

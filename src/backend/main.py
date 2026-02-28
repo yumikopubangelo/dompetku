@@ -1,4 +1,4 @@
-"""Entry point backend Dompetku."""
+﻿"""Entry point backend Dompetku."""
 
 from flask import Flask
 from flask_cors import CORS
@@ -62,3 +62,4 @@ def home():
 if __name__ == "__main__":
     # Menjalankan server Flask saat file dieksekusi langsung.
     app.run(host="0.0.0.0", port=APP_PORT, debug=APP_DEBUG)
+
