@@ -15,6 +15,7 @@ PyMySQL>=1.1,<2.0                # Driver koneksi ke MySQL (WAJIB!)
 # --- API & Validasi ---
 marshmallow>=3.21,<4.0           # Serialisasi & validasi data request/response
 Flask-CORS>=4.0,<5.0             # Izinkan request dari frontend (beda port/domain)
+Flask-Bcrypt>=1.0,<2.0 
 
 # --- Autentikasi ---
 Flask-JWT-Extended>=4.6,<5.0    # Autentikasi berbasis token (JWT)
