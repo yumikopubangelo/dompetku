@@ -1,4 +1,4 @@
-"""Unit test untuk fitur autentikasi dan util password."""
+﻿"""Unit test untuk fitur autentikasi dan util password."""
 
 from types import SimpleNamespace
 
@@ -157,3 +157,5 @@ def test_logout_route_returns_200(flask_app, bypass_jwt, monkeypatch):
     assert resp.status_code == 200
     assert resp.get_json()["message"] == "Logout berhasil"
     assert captured["jti"] == "jti-logout"
+
+
