@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dompetku - {% block title %}Aplikasi Keuangan Pribadi{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% set is_auth_page = request.path in ['/login', '/register'] %}
+    <div class="container">
+        {% if not is_auth_page %}
+        {% include 'components/header.html' %}
+        {% endif %}
+        {% include 'components/alerts.html' %}
+        {% if not is_auth_page %}
+        {% include 'components/modal.html' %}
+        {% endif %}
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        {% include 'components/footer.html' %}
+    </div>
+    <script>
+      window.API_BASE_URL = {{ API_BASE_URL | tojson }};
+      window.IS_AUTH_PAGE = {{ is_auth_page | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
