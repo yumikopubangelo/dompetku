@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Rekap Bulanan{% endblock %}
+
+{% block content %}
+<div class="content-card">
+  <div class="card-header">
+    <h2>Rekap Keuangan Bulanan</h2>
+  </div>
+
+  <div class="rekap-controls">
+    <select id="bulan">
+      <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+      <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+      <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+      <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+    </select>
+    <input type="number" id="tahun" value="2024" min="2020" max="2030">
+    <button class="btn btn-primary" onclick="loadRekap()">Lihat Rekap</button>
+  </div>
+
+  <div class="rekap-summary" id="rekapSummary" style="display:none;">
+    <div class="rekap-item pemasukan"><h4>Total Pemasukan</h4><p id="rekapPemasukan">Rp 0</p></div>
+    <div class="rekap-item pengeluaran"><h4>Total Pengeluaran</h4><p id="rekapPengeluaran">Rp 0</p></div>
+    <div class="rekap-item saldo"><h4>Selisih</h4><p id="rekapSelisih">Rp 0</p></div>
+  </div>
+
+  <div class="table-container">
+    <table id="rekapTable">
+      <thead>
+        <tr><th>Tanggal</th><th>Tipe</th><th>Kategori</th><th>Jumlah</th><th>Deskripsi</th></tr>
+      </thead>
+      <tbody id="rekapList"><tr><td colspan="5" style="text-align:center;">Pilih bulan dan tahun</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function loadRekap() {
+  const bulan = document.getElementById('bulan').value;
+  const tahun = document.getElementById('tahun').value;
+
+  try {
+    const response = await fetch(`http://localhost:8080/api/rekap/${bulan}/${tahun}`);
+    const data = await response.json();
+
+    document.getElementById('rekapSummary').style.display = 'grid';
+    document.getElementById('rekapPemasukan').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.totalPemasukan || 0);
+    document.getElementById('rekapPengeluaran').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.totalPengeluaran || 0);
+    const selisih = (data.totalPemasukan || 0) - (data.totalPengeluaran || 0);
+    document.getElementById('rekapSelisih').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(selisih);
+
+    const tbody = document.getElementById('rekapList');
+    if (!data.transaksi || !data.transaksi.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada transaksi bulan ini</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.transaksi.map(t => `
+      <tr>
+        <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
+        <td><span class="badge ${t.tipe === 'pemasukan' ? 'badge-success' : 'badge-danger'}">${t.tipe}</span></td>
+        <td>${t.kategori || '-'}</td>
+        <td>Rp ${new Intl.NumberFormat('id-ID').format(t.jumlah)}</td>
+        <td>${t.deskripsi || '-'}</td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    showAlert('Gagal memuat rekap', 'danger');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  document.getElementById('bulan').value = now.getMonth() + 1;
+  document.getElementById('tahun').value = now.getFullYear();
+  loadRekap();
+});
+</script>
+{% endblock %}
