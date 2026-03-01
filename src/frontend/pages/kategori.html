@@ -21,7 +21,8 @@
 <script>
 async function loadKategori() {
   try {
-    const response = await fetch('http://localhost:8080/api/kategori');
+    const response = await apiFetch('/kategori/');
+    if (!response.ok) throw new Error('Gagal memuat kategori');
     const data = await response.json();
     const tbody = document.getElementById('kategoriList');
 
