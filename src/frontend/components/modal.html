@@ -22,6 +22,27 @@
 </div>
 
 <script>
+    const kategoriCache = {
+        all: [],
+        pemasukan: [],
+        pengeluaran: []
+    };
+
+    function toNumber(value) {
+        const parsed = Number(value);
+        return Number.isNaN(parsed) ? 0 : parsed;
+    }
+
+    async function ensureKategoriCache() {
+        if (kategoriCache.all.length) return;
+        const response = await apiFetch('/kategori/');
+        if (!response.ok) throw new Error('Gagal memuat kategori');
+        const data = await response.json();
+        kategoriCache.all = data;
+        kategoriCache.pemasukan = data.filter((k) => k.tipe === 'pemasukan');
+        kategoriCache.pengeluaran = data.filter((k) => k.tipe === 'pengeluaran');
+    }
+
     // Fungsi untuk membuka modal
     function openModal(type, id = null) {
         const modal = document.getElementById('modal');
@@ -98,12 +119,16 @@
     // Fungsi untuk mengambil data saat edit
     async function loadDataForEdit(type, id) {
         try {
-            const response = await fetch(`http://localhost:8080/api/${type}/${id}`);
-            const data = await response.json();
+            const response = await apiFetch(`/${type}/`);
+            if (!response.ok) throw new Error('Gagal memuat data');
+            const list = await response.json();
+            const data = list.find((row) => Number(row.id) === Number(id));
+            if (!data) throw new Error('Data tidak ditemukan');
+
             if (type === 'pemasukan' || type === 'pengeluaran') {
                 document.getElementById('tanggal').value = data.tanggal.split('T')[0];
                 document.getElementById('jumlah').value = data.jumlah;
-                document.getElementById('kategori').value = data.kategori;
+                document.getElementById('kategori').value = data.kategori_id || '';
                 document.getElementById('deskripsi').value = data.deskripsi || '';
             } else if (type === 'kategori') {
                 document.getElementById('nama').value = data.nama;
@@ -118,19 +143,20 @@
     async function saveData() {
         const type = document.getElementById('currentType').value;
         const id = document.getElementById('editId').value;
-        let url = `http://localhost:8080/api/${type}`;
+        let url = `/${type}/`;
         let method = 'POST';
         if (id) {
-            url += `/${id}`;
+            url = `/${type}/${id}`;
             method = 'PUT';
         }
 
         let data = {};
         if (type === 'pemasukan' || type === 'pengeluaran') {
+            const kategoriIdRaw = document.getElementById('kategori').value;
             data = {
                 tanggal: document.getElementById('tanggal').value,
-                jumlah: parseInt(document.getElementById('jumlah').value),
-                kategori: document.getElementById('kategori').value,
+                jumlah: toNumber(document.getElementById('jumlah').value),
+                kategori_id: kategoriIdRaw ? toNumber(kategoriIdRaw) : null,
                 deskripsi: document.getElementById('deskripsi').value
             };
         } else if (type === 'kategori') {
@@ -141,9 +167,8 @@
         }
 
         try {
-            const response = await fetch(url, {
+            const response = await apiFetch(url, {
                 method: method,
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
             if (response.ok) {
@@ -162,16 +187,14 @@
     // Load kategori ke dropdown
     async function loadKategoriOptions(tipe) {
         try {
-            const response = await fetch('http://localhost:8080/api/kategori');
-            const kategoriList = await response.json();
+            await ensureKategoriCache();
+            const kategoriList = kategoriCache[tipe] || [];
             const select = document.getElementById('kategori');
             if (!select) return;
             select.innerHTML = '<option value="">Pilih Kategori</option>';
-            kategoriList
-                .filter(k => k.tipe === tipe)
-                .forEach(k => {
-                    select.innerHTML += `<option value="${k.nama}">${k.nama}</option>`;
-                });
+            kategoriList.forEach((k) => {
+                select.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
+            });
         } catch (error) {
             console.error('Gagal memuat kategori', error);
         }

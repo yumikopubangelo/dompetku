@@ -6,6 +6,10 @@
     <div class="logo" onclick="window.location.href='/'">
         Dompetku
     </div>
+    <div style="display:flex;gap:0.75rem;align-items:center;">
+        <span id="authUserLabel" class="badge badge-success" style="display:none;"></span>
+        <button type="button" class="btn btn-danger" onclick="logoutSession()">Logout</button>
+    </div>
     <div class="saldo-card">
         <div class="saldo-label">Saldo Saat Ini</div>
         <div class="saldo-nominal" id="saldoHeader">Rp 0</div>
@@ -29,13 +33,23 @@
     </a>
 </nav>
 <script>
+    function renderCurrentUser() {
+        const label = document.getElementById('authUserLabel');
+        const user = getCurrentUser();
+        if (user && user.username) {
+            label.textContent = `User: ${user.username}`;
+            label.style.display = 'inline-block';
+        }
+    }
+
     // Fungsi untuk memperbarui saldo di header secara berkala
     async function updateSaldo() {
         try {
-            const response = await fetch('http://localhost:8080/api/saldo');
+            const response = await apiFetch('/saldo/');
+            if (!response.ok) return;
             const data = await response.json();
             document.getElementById('saldoHeader').innerText = 'Rp ' +
-                new Intl.NumberFormat('id-ID').format(data.saldo || 0);
+                new Intl.NumberFormat('id-ID').format(Number(data.saldo_akhir || 0));
         } catch (error) {
             console.error('Gagal memuat saldo:', error);
         }
@@ -44,5 +58,8 @@
     // Update setiap 30 detik
     setInterval(updateSaldo, 30000);
     // Update saat halaman dimuat
-    document.addEventListener('DOMContentLoaded', updateSaldo);
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCurrentUser();
+        updateSaldo();
+    });
 </script>

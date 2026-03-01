@@ -26,10 +26,25 @@
 
 <script>
 let pengeluaranData = [];
+let kategoriMap = new Map();
+
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isNaN(n) ? 0 : n;
+}
 
 async function loadPengeluaran() {
   try {
-    const response = await fetch('http://localhost:8080/api/pengeluaran');
+    const [pengeluaranRes, kategoriRes] = await Promise.all([
+      apiFetch('/pengeluaran/'),
+      apiFetch('/kategori/')
+    ]);
+    if (!pengeluaranRes.ok || !kategoriRes.ok) throw new Error('Gagal memuat data');
+
+    const kategori = await kategoriRes.json();
+    kategoriMap = new Map(kategori.map((k) => [Number(k.id), k.nama]));
+
+    const response = pengeluaranRes;
     pengeluaranData = await response.json();
     renderTable(pengeluaranData);
   } catch (e) {
@@ -47,8 +62,8 @@ function renderTable(data) {
     <tr>
       <td>${item.id}</td>
       <td>${new Date(item.tanggal).toLocaleDateString('id-ID')}</td>
-      <td>Rp ${new Intl.NumberFormat('id-ID').format(item.jumlah)}</td>
-      <td>${item.kategori || '-'}</td>
+      <td>${formatRupiah(toNumber(item.jumlah))}</td>
+      <td>${kategoriMap.get(Number(item.kategori_id)) || '-'}</td>
       <td>${item.deskripsi || '-'}</td>
       <td>
         <button class="btn btn-sm btn-warning" onclick="openModal('pengeluaran', ${item.id})">Edit</button>
@@ -61,7 +76,7 @@ function renderTable(data) {
 async function deletePengeluaran(id) {
   if (!confirm('Yakin ingin menghapus?')) return;
   try {
-    const response = await fetch(`http://localhost:8080/api/pengeluaran/${id}`, { method: 'DELETE' });
+    const response = await apiFetch(`/pengeluaran/${id}`, { method: 'DELETE' });
     if (response.ok) {
       showAlert('Data berhasil dihapus', 'success');
       loadPengeluaran();

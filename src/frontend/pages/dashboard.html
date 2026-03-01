@@ -50,21 +50,35 @@
 </div>
 
 <script>
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isNaN(n) ? 0 : n;
+}
+
 async function loadDashboard() {
   try {
-    const statRes = await fetch('http://localhost:8080/api/statistik');
+    const statRes = await apiFetch('/statistik/');
+    if (!statRes.ok) throw new Error('Gagal memuat statistik');
     const stat = await statRes.json();
-    document.getElementById('totalTransaksi').innerText = stat.totalTransaksi || 0;
-    document.getElementById('totalPemasukan').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(stat.totalPemasukan || 0);
-    document.getElementById('totalPengeluaran').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(stat.totalPengeluaran || 0);
+    document.getElementById('totalPemasukan').innerText = formatRupiah(stat.total_pemasukan);
+    document.getElementById('totalPengeluaran').innerText = formatRupiah(stat.total_pengeluaran);
 
-    const [pemasukanRes, pengeluaranRes] = await Promise.all([
-      fetch('http://localhost:8080/api/pemasukan'),
-      fetch('http://localhost:8080/api/pengeluaran')
+    const [pemasukanRes, pengeluaranRes, kategoriRes] = await Promise.all([
+      apiFetch('/pemasukan/'),
+      apiFetch('/pengeluaran/'),
+      apiFetch('/kategori/')
     ]);
+    if (!pemasukanRes.ok || !pengeluaranRes.ok || !kategoriRes.ok) {
+      throw new Error('Gagal memuat data transaksi');
+    }
 
     const pemasukan = await pemasukanRes.json();
     const pengeluaran = await pengeluaranRes.json();
+    const kategori = await kategoriRes.json();
+    const kategoriMap = new Map(kategori.map((k) => [Number(k.id), k.nama]));
+
+    const totalTransaksi = (pemasukan?.length || 0) + (pengeluaran?.length || 0);
+    document.getElementById('totalTransaksi').innerText = totalTransaksi;
 
     const all = [
       ...pemasukan.map(p => ({ ...p, tipe: 'pemasukan' })),
@@ -77,8 +91,8 @@ async function loadDashboard() {
           <tr>
             <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
             <td><span class="badge ${t.tipe === 'pemasukan' ? 'badge-success' : 'badge-danger'}">${t.tipe}</span></td>
-            <td>${t.kategori || '-'}</td>
-            <td>Rp ${new Intl.NumberFormat('id-ID').format(t.jumlah)}</td>
+            <td>${kategoriMap.get(Number(t.kategori_id)) || '-'}</td>
+            <td>${formatRupiah(toNumber(t.jumlah))}</td>
             <td>${t.deskripsi || '-'}</td>
           </tr>
         `).join('')

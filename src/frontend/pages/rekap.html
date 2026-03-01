@@ -27,9 +27,9 @@
   <div class="table-container">
     <table id="rekapTable">
       <thead>
-        <tr><th>Tanggal</th><th>Tipe</th><th>Kategori</th><th>Jumlah</th><th>Deskripsi</th></tr>
+        <tr><th>Tipe</th><th>Kategori</th><th>Total</th></tr>
       </thead>
-      <tbody id="rekapList"><tr><td colspan="5" style="text-align:center;">Pilih bulan dan tahun</td></tr></tbody>
+      <tbody id="rekapList"><tr><td colspan="3" style="text-align:center;">Pilih bulan dan tahun</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -40,30 +40,38 @@ async function loadRekap() {
   const tahun = document.getElementById('tahun').value;
 
   try {
-    const response = await fetch(`http://localhost:8080/api/rekap/${bulan}/${tahun}`);
+    const response = await apiFetch(`/rekap/bulanan?bulan=${bulan}&tahun=${tahun}`);
+    if (!response.ok) throw new Error('Gagal memuat rekap');
     const data = await response.json();
 
     document.getElementById('rekapSummary').style.display = 'grid';
-    document.getElementById('rekapPemasukan').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.totalPemasukan || 0);
-    document.getElementById('rekapPengeluaran').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.totalPengeluaran || 0);
-    const selisih = (data.totalPemasukan || 0) - (data.totalPengeluaran || 0);
-    document.getElementById('rekapSelisih').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(selisih);
+    document.getElementById('rekapPemasukan').innerText = formatRupiah(data.total_pemasukan);
+    document.getElementById('rekapPengeluaran').innerText = formatRupiah(data.total_pengeluaran);
+    document.getElementById('rekapSelisih').innerText = formatRupiah(data.saldo_akhir);
 
     const tbody = document.getElementById('rekapList');
-    if (!data.transaksi || !data.transaksi.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada transaksi bulan ini</td></tr>';
+    const pemasukanRows = (data.pemasukan_per_kategori || []).map((row) => `
+      <tr>
+        <td><span class="badge badge-success">pemasukan</span></td>
+        <td>${row.kategori}</td>
+        <td>${formatRupiah(row.total)}</td>
+      </tr>
+    `);
+    const pengeluaranRows = (data.pengeluaran_per_kategori || []).map((row) => `
+      <tr>
+        <td><span class="badge badge-danger">pengeluaran</span></td>
+        <td>${row.kategori}</td>
+        <td>${formatRupiah(row.total)}</td>
+      </tr>
+    `);
+    const rows = [...pemasukanRows, ...pengeluaranRows];
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Tidak ada transaksi bulan ini</td></tr>';
       return;
     }
 
-    tbody.innerHTML = data.transaksi.map(t => `
-      <tr>
-        <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
-        <td><span class="badge ${t.tipe === 'pemasukan' ? 'badge-success' : 'badge-danger'}">${t.tipe}</span></td>
-        <td>${t.kategori || '-'}</td>
-        <td>Rp ${new Intl.NumberFormat('id-ID').format(t.jumlah)}</td>
-        <td>${t.deskripsi || '-'}</td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = rows.join('');
   } catch (e) {
     showAlert('Gagal memuat rekap', 'danger');
   }
