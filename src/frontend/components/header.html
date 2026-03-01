@@ -1,0 +1,48 @@
+﻿<!-- ====================================================
+     components/header.html
+     Header dan navigasi tabs
+     ==================================================== -->
+<header class="app-header">
+    <div class="logo" onclick="window.location.href='/'">
+        Dompetku
+    </div>
+    <div class="saldo-card">
+        <div class="saldo-label">Saldo Saat Ini</div>
+        <div class="saldo-nominal" id="saldoHeader">Rp 0</div>
+    </div>
+</header>
+<nav class="tabs-nav">
+    <a href="/dashboard" class="tab-btn {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+    <a href="/pemasukan" class="tab-btn {% if request.path == '/pemasukan' %}active{% endif %}">
+        Pemasukan
+    </a>
+    <a href="/pengeluaran" class="tab-btn {% if request.path == '/pengeluaran' %}active{% endif %}">
+        Pengeluaran
+    </a>
+    <a href="/kategori" class="tab-btn {% if request.path == '/kategori' %}active{% endif %}">
+        Kategori
+    </a>
+    <a href="/rekap" class="tab-btn {% if request.path == '/rekap' %}active{% endif %}">
+        Rekap
+    </a>
+</nav>
+<script>
+    // Fungsi untuk memperbarui saldo di header secara berkala
+    async function updateSaldo() {
+        try {
+            const response = await fetch('http://localhost:8080/api/saldo');
+            const data = await response.json();
+            document.getElementById('saldoHeader').innerText = 'Rp ' +
+                new Intl.NumberFormat('id-ID').format(data.saldo || 0);
+        } catch (error) {
+            console.error('Gagal memuat saldo:', error);
+        }
+    }
+
+    // Update setiap 30 detik
+    setInterval(updateSaldo, 30000);
+    // Update saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', updateSaldo);
+</script>
