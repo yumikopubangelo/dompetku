@@ -1,0 +1,18 @@
+<!-- ====================================================
+     components/alerts.html
+     Tempat menampilkan pesan notifikasi
+     ==================================================== -->
+
+<div id="alert" class="alert"></div>
+
+<script>
+    // Fungsi untuk menampilkan alert
+    function showAlert(message, type = 'success') {
+        const alertDiv = document.getElementById('alert');
+        alertDiv.textContent = message;
+        alertDiv.className = `alert alert-${type} show`;
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+        }, 3000);
+    }
+</script>

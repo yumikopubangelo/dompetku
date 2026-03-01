@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dompetku - {% block title %}Aplikasi Keuangan Pribadi{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <!-- Header component -->
+        {% include 'components/header.html' %}
+        <!-- Alert component -->
+        {% include 'components/alerts.html' %}
+        <!-- Modal component (untuk form tambah/edit) -->
+        {% include 'components/modal.html' %}
+        <!-- Konten halaman -->
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        <!-- Footer component -->
+        {% include 'components/footer.html' %}
+    </div>
+    <!-- JavaScript global -->
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
