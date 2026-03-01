@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid" id="statistik">
+  <div class="stat-card">
+    <div class="stat-icon primary"></div>
+    <div class="stat-content">
+      <h4>Total Transaksi</h4>
+      <p id="totalTransaksi">0</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon success"></div>
+    <div class="stat-content">
+      <h4>Total Pemasukan</h4>
+      <p id="totalPemasukan">Rp 0</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon danger"></div>
+    <div class="stat-content">
+      <h4>Total Pengeluaran</h4>
+      <p id="totalPengeluaran">Rp 0</p>
+    </div>
+  </div>
+</div>
+
+<div class="content-card">
+  <div class="card-header">
+    <h2>Transaksi Terbaru</h2>
+    <a href="/pemasukan" class="btn btn-primary">Lihat Semua</a>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Tipe</th>
+          <th>Kategori</th>
+          <th>Jumlah</th>
+          <th>Deskripsi</th>
+        </tr>
+      </thead>
+      <tbody id="recentTransactions">
+        <tr><td colspan="5">Memuat...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function loadDashboard() {
+  try {
+    const statRes = await fetch('http://localhost:8080/api/statistik');
+    const stat = await statRes.json();
+    document.getElementById('totalTransaksi').innerText = stat.totalTransaksi || 0;
+    document.getElementById('totalPemasukan').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(stat.totalPemasukan || 0);
+    document.getElementById('totalPengeluaran').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(stat.totalPengeluaran || 0);
+
+    const [pemasukanRes, pengeluaranRes] = await Promise.all([
+      fetch('http://localhost:8080/api/pemasukan'),
+      fetch('http://localhost:8080/api/pengeluaran')
+    ]);
+
+    const pemasukan = await pemasukanRes.json();
+    const pengeluaran = await pengeluaranRes.json();
+
+    const all = [
+      ...pemasukan.map(p => ({ ...p, tipe: 'pemasukan' })),
+      ...pengeluaran.map(p => ({ ...p, tipe: 'pengeluaran' }))
+    ].sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal)).slice(0,5);
+
+    const tbody = document.getElementById('recentTransactions');
+    tbody.innerHTML = all.length
+      ? all.map(t => `
+          <tr>
+            <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
+            <td><span class="badge ${t.tipe === 'pemasukan' ? 'badge-success' : 'badge-danger'}">${t.tipe}</span></td>
+            <td>${t.kategori || '-'}</td>
+            <td>Rp ${new Intl.NumberFormat('id-ID').format(t.jumlah)}</td>
+            <td>${t.deskripsi || '-'}</td>
+          </tr>
+        `).join('')
+      : '<tr><td colspan="5" style="text-align:center;">Belum ada transaksi</td></tr>';
+  } catch (e) {
+    showAlert('Gagal memuat data dashboard', 'danger');
+  }
+}
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+{% endblock %}
