@@ -1,0 +1,202 @@
+<!-- ====================================================
+     components/modal.html
+     Modal untuk form tambah/edit data
+     ==================================================== -->
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Tambah Data</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="modalForm" onsubmit="event.preventDefault(); saveData();">
+            <input type="hidden" id="editId">
+            <input type="hidden" id="currentType">
+            <div id="formFields"></div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                <button type="button" class="btn btn-danger" onclick="closeModal()">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const kategoriCache = {
+        all: [],
+        pemasukan: [],
+        pengeluaran: []
+    };
+
+    function toNumber(value) {
+        const parsed = Number(value);
+        return Number.isNaN(parsed) ? 0 : parsed;
+    }
+
+    async function ensureKategoriCache() {
+        if (kategoriCache.all.length) return;
+        const response = await apiFetch('/kategori/');
+        if (!response.ok) throw new Error('Gagal memuat kategori');
+        const data = await response.json();
+        kategoriCache.all = data;
+        kategoriCache.pemasukan = data.filter((k) => k.tipe === 'pemasukan');
+        kategoriCache.pengeluaran = data.filter((k) => k.tipe === 'pengeluaran');
+    }
+
+    // Fungsi untuk membuka modal
+    function openModal(type, id = null) {
+        const modal = document.getElementById('modal');
+        document.getElementById('currentType').value = type;
+        document.getElementById('editId').value = id || '';
+        
+        // Set judul modal
+        const titles = {
+            pemasukan: id ? 'Edit Pemasukan' : 'Tambah Pemasukan',
+            pengeluaran: id ? 'Edit Pengeluaran' : 'Tambah Pengeluaran',
+            kategori: id ? 'Edit Kategori' : 'Tambah Kategori'
+        };
+        document.getElementById('modalTitle').innerText = titles[type] || 'Form';
+        
+        // Render field sesuai tipe
+        renderFormFields(type);
+        
+        // Jika edit, ambil data dari API
+        if (id) {
+            loadDataForEdit(type, id);
+        }
+        
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.remove('active');
+    }
+
+    // Render field form berdasarkan tipe
+    function renderFormFields(type) {
+        const container = document.getElementById('formFields');
+        if (type === 'pemasukan' || type === 'pengeluaran') {
+            container.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Tanggal</label>
+                    <input type="date" class="form-control" id="tanggal" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Jumlah (Rp)</label>
+                    <input type="number" class="form-control" id="jumlah" required min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kategori</label>
+                    <select class="form-control" id="kategori" required>
+                        <option value="">Pilih Kategori</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Deskripsi</label>
+                    <textarea class="form-control" id="deskripsi" rows="3"></textarea>
+                </div>
+            `;
+            // Load kategori sesuai tipe
+            loadKategoriOptions(type);
+        } else if (type === 'kategori') {
+            container.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Nama Kategori</label>
+                    <input type="text" class="form-control" id="nama" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipe</label>
+                    <select class="form-control" id="tipe" required>
+                        <option value="">Pilih Tipe</option>
+                        <option value="pemasukan">Pemasukan</option>
+                        <option value="pengeluaran">Pengeluaran</option>
+                    </select>
+                </div>
+            `;
+        }
+    }
+
+    // Fungsi untuk mengambil data saat edit
+    async function loadDataForEdit(type, id) {
+        try {
+            const response = await apiFetch(`/${type}/`);
+            if (!response.ok) throw new Error('Gagal memuat data');
+            const list = await response.json();
+            const data = list.find((row) => Number(row.id) === Number(id));
+            if (!data) throw new Error('Data tidak ditemukan');
+
+            if (type === 'pemasukan' || type === 'pengeluaran') {
+                document.getElementById('tanggal').value = data.tanggal.split('T')[0];
+                document.getElementById('jumlah').value = data.jumlah;
+                document.getElementById('kategori').value = data.kategori_id || '';
+                document.getElementById('deskripsi').value = data.deskripsi || '';
+            } else if (type === 'kategori') {
+                document.getElementById('nama').value = data.nama;
+                document.getElementById('tipe').value = data.tipe;
+            }
+        } catch (error) {
+            showAlert('Gagal memuat data', 'danger');
+        }
+    }
+
+    // Fungsi menyimpan data (POST / PUT)
+    async function saveData() {
+        const type = document.getElementById('currentType').value;
+        const id = document.getElementById('editId').value;
+        let url = `/${type}/`;
+        let method = 'POST';
+        if (id) {
+            url = `/${type}/${id}`;
+            method = 'PUT';
+        }
+
+        let data = {};
+        if (type === 'pemasukan' || type === 'pengeluaran') {
+            const kategoriIdRaw = document.getElementById('kategori').value;
+            data = {
+                tanggal: document.getElementById('tanggal').value,
+                jumlah: toNumber(document.getElementById('jumlah').value),
+                kategori_id: kategoriIdRaw ? toNumber(kategoriIdRaw) : null,
+                deskripsi: document.getElementById('deskripsi').value
+            };
+        } else if (type === 'kategori') {
+            data = {
+                nama: document.getElementById('nama').value,
+                tipe: document.getElementById('tipe').value
+            };
+        }
+
+        try {
+            const response = await apiFetch(url, {
+                method: method,
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                showAlert('Data berhasil disimpan', 'success');
+                closeModal();
+                // Refresh data di halaman (fungsi akan didefinisikan per halaman)
+                if (typeof refreshData === 'function') refreshData();
+            } else {
+                showAlert('Gagal menyimpan data', 'danger');
+            }
+        } catch (error) {
+            showAlert('Terjadi kesalahan', 'danger');
+        }
+    }
+
+    // Load kategori ke dropdown
+    async function loadKategoriOptions(tipe) {
+        try {
+            await ensureKategoriCache();
+            const kategoriList = kategoriCache[tipe] || [];
+            const select = document.getElementById('kategori');
+            if (!select) return;
+            select.innerHTML = '<option value="">Pilih Kategori</option>';
+            kategoriList.forEach((k) => {
+                select.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
+            });
+        } catch (error) {
+            console.error('Gagal memuat kategori', error);
+        }
+    }
+</script>

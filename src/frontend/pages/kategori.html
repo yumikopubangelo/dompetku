@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Kategori{% endblock %}
+
+{% block content %}
+<div class="content-card">
+  <div class="card-header">
+    <h2>Daftar Kategori</h2>
+    <button class="btn btn-primary" onclick="openModal('kategori')">+ Tambah Kategori</button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Nama Kategori</th><th>Tipe</th><th>Aksi</th></tr>
+      </thead>
+      <tbody id="kategoriList"><tr><td colspan="4">Memuat...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function loadKategori() {
+  try {
+    const response = await apiFetch('/kategori/');
+    if (!response.ok) throw new Error('Gagal memuat kategori');
+    const data = await response.json();
+    const tbody = document.getElementById('kategoriList');
+
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada kategori</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(item => `
+      <tr>
+        <td>${item.id}</td>
+        <td>${item.nama}</td>
+        <td><span class="badge ${item.tipe === 'pemasukan' ? 'badge-success' : 'badge-danger'}">${item.tipe}</span></td>
+        <td><button class="btn btn-sm btn-warning" onclick="openModal('kategori', ${item.id})">Edit</button></td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    showAlert('Gagal memuat kategori', 'danger');
+  }
+}
+
+window.refreshData = loadKategori;
+document.addEventListener('DOMContentLoaded', loadKategori);
+</script>
+{% endblock %}

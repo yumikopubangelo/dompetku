@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Pengeluaran{% endblock %}
+
+{% block content %}
+<div class="content-card">
+  <div class="card-header">
+    <h2>Daftar Pengeluaran</h2>
+    <button class="btn btn-primary" onclick="openModal('pengeluaran')">+ Tambah Pengeluaran</button>
+  </div>
+
+  <div class="filter-section">
+    <input type="text" class="filter-input" placeholder="Cari kategori..." id="searchInput" onkeyup="filterTable()">
+  </div>
+
+  <div class="table-container">
+    <table id="pengeluaranTable">
+      <thead>
+        <tr>
+          <th>ID</th><th>Tanggal</th><th>Jumlah</th><th>Kategori</th><th>Deskripsi</th><th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="pengeluaranList"><tr><td colspan="6">Memuat...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let pengeluaranData = [];
+let kategoriMap = new Map();
+
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+async function loadPengeluaran() {
+  try {
+    const [pengeluaranRes, kategoriRes] = await Promise.all([
+      apiFetch('/pengeluaran/'),
+      apiFetch('/kategori/')
+    ]);
+    if (!pengeluaranRes.ok || !kategoriRes.ok) throw new Error('Gagal memuat data');
+
+    const kategori = await kategoriRes.json();
+    kategoriMap = new Map(kategori.map((k) => [Number(k.id), k.nama]));
+
+    const response = pengeluaranRes;
+    pengeluaranData = await response.json();
+    renderTable(pengeluaranData);
+  } catch (e) {
+    showAlert('Gagal memuat data', 'danger');
+  }
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('pengeluaranList');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Tidak ada data</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(item => `
+    <tr>
+      <td>${item.id}</td>
+      <td>${new Date(item.tanggal).toLocaleDateString('id-ID')}</td>
+      <td>${formatRupiah(toNumber(item.jumlah))}</td>
+      <td>${kategoriMap.get(Number(item.kategori_id)) || '-'}</td>
+      <td>${item.deskripsi || '-'}</td>
+      <td>
+        <button class="btn btn-sm btn-warning" onclick="openModal('pengeluaran', ${item.id})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePengeluaran(${item.id})">Hapus</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function deletePengeluaran(id) {
+  if (!confirm('Yakin ingin menghapus?')) return;
+  try {
+    const response = await apiFetch(`/pengeluaran/${id}`, { method: 'DELETE' });
+    if (response.ok) {
+      showAlert('Data berhasil dihapus', 'success');
+      loadPengeluaran();
+    } else {
+      showAlert('Gagal menghapus', 'danger');
+    }
+  } catch (e) {
+    showAlert('Gagal menghapus', 'danger');
+  }
+}
+
+function filterTable() {
+  const keyword = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = pengeluaranData.filter(item =>
+    (item.kategori && item.kategori.toLowerCase().includes(keyword)) ||
+    (item.deskripsi && item.deskripsi.toLowerCase().includes(keyword))
+  );
+  renderTable(filtered);
+}
+
+window.refreshData = loadPengeluaran;
+document.addEventListener('DOMContentLoaded', loadPengeluaran);
+</script>
+{% endblock %}
