@@ -7,8 +7,8 @@ on:
     branches: [ main, development ]
 
 jobs:
-  test:
-    name: Run Backend and Frontend Tests
+  test-suite:
+    name: Run Test Suite
     runs-on: ubuntu-latest
 
     steps:
@@ -27,8 +27,8 @@ jobs:
 
       - name: Run backend tests
         run: |
-          python -m pytest tests/test_*.py -v
+          python -m pytest tests/ -v -k "not frontend_pages"
 
-      - name: Run frontend tests
+      - name: Run frontend page tests
         run: |
-          python -m pytest tests/frontend/ -v
+          python -m pytest tests/test_frontend_pages.py -v
