@@ -102,9 +102,9 @@ def _build_statistik_client(flask_app):
 def _patch_statistik_dependencies(monkeypatch, session):
     """Menyuntikkan dependency palsu untuk service statistik."""
     fake_db = SimpleNamespace(session=session, func=FakeFunc())
-    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan")
-    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
-    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
+    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan", user_id=1)
+    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
+    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
 
     monkeypatch.setattr(statistik_service, "db", fake_db)
     monkeypatch.setattr(statistik_service, "Kategori", fake_kategori)

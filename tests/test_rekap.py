@@ -88,9 +88,9 @@ def test_get_rekap_bulanan_service_success(monkeypatch):
     )
 
     fake_db = SimpleNamespace(session=session, func=FakeFunc())
-    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan")
-    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
-    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
+    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan", user_id=1)
+    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
+    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
 
     monkeypatch.setattr(rekap_service, "db", fake_db)
     monkeypatch.setattr(rekap_service, "Kategori", fake_kategori)
@@ -114,9 +114,9 @@ def test_get_rekap_bulanan_service_raises_on_query_error(monkeypatch):
             raise RuntimeError("query gagal")
 
     fake_db = SimpleNamespace(session=BrokenSession(), func=FakeFunc())
-    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan")
-    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
-    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
+    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan", user_id=1)
+    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
+    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
 
     monkeypatch.setattr(rekap_service, "db", fake_db)
     monkeypatch.setattr(rekap_service, "Kategori", fake_kategori)
