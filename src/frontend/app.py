@@ -18,7 +18,12 @@ app = Flask(
 
 # Konfigurasi (bisa diambil dari environment variable)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-ubah-di-production')
-app.config['API_BASE_URL'] = os.environ.get('API_BASE_URL', 'http://localhost:8080/api')  # URL backend
+app.config['API_BASE_URL'] = os.environ.get('API_BASE_URL', 'http://localhost:5000/api')  # URL backend
+
+
+@app.context_processor
+def inject_globals():
+    return {"API_BASE_URL": app.config["API_BASE_URL"]}
 
 # ====================================================
 # ROUTING UNTUK HALAMAN
@@ -65,8 +70,24 @@ def rekap():
     """
     return render_template('pages/rekap.html')
 
+
+@app.route('/login')
+def login():
+    """Halaman login frontend."""
+    return render_template('pages/login.html')
+
+
+@app.route('/register')
+def register():
+    """Halaman registrasi frontend."""
+    return render_template('pages/register.html')
+
 # ====================================================
 # MENJALANKAN APLIKASI
 # ====================================================
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)  # Jalankan di port 5000
+    app.run(
+        host='0.0.0.0',
+        debug=os.environ.get('FRONTEND_DEBUG', 'true').lower() == 'true',
+        port=int(os.environ.get('FRONTEND_PORT', 8081))
+    )
