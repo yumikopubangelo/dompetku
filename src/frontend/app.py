@@ -20,10 +20,10 @@ app = Flask(
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-ubah-di-production')
 app.config['API_BASE_URL'] = os.environ.get('API_BASE_URL', 'http://localhost:5000/api')  # URL backend
 
-
+# Context processor untuk membuat variabel tersedia di semua template
 @app.context_processor
-def inject_globals():
-    return {"API_BASE_URL": app.config["API_BASE_URL"]}
+def inject_config():
+    return dict(API_BASE_URL=app.config['API_BASE_URL'])
 
 # ====================================================
 # ROUTING UNTUK HALAMAN
@@ -37,6 +37,20 @@ def dashboard():
     Menampilkan ringkasan statistik dan saldo.
     """
     return render_template('pages/dashboard.html')
+
+@app.route('/login')
+def login():
+    """
+    Halaman login user.
+    """
+    return render_template('pages/login.html')
+
+@app.route('/register')
+def register():
+    """
+    Halaman registrasi user baru.
+    """
+    return render_template('pages/register.html')
 
 @app.route('/pemasukan')
 def pemasukan():
@@ -86,8 +100,4 @@ def register():
 # MENJALANKAN APLIKASI
 # ====================================================
 if __name__ == '__main__':
-    app.run(
-        host='0.0.0.0',
-        debug=os.environ.get('FRONTEND_DEBUG', 'true').lower() == 'true',
-        port=int(os.environ.get('FRONTEND_PORT', 8081))
-    )
+    app.run(debug=True, port=5000)  # Jalankan di port 5001 untuk Menghindari konflik dengan backend Docker

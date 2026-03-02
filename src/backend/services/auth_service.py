@@ -3,7 +3,10 @@
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 from models.user import User
-from utils.password_utils import verify_password
+
+from utils.password_utils import verify_password, hash_password
+from config import db
+
 
 # Token blacklist in-memory.
 # Cocok untuk development; untuk production sebaiknya disimpan di Redis/DB.
@@ -44,3 +47,17 @@ def revoke_token(jti):
 def is_token_revoked(jti):
     """Mengecek apakah token JWT sudah masuk daftar revoke."""
     return jti in REVOKED_TOKEN_JTI
+
+
+def register_new_user(username, password):
+    """Membuat user baru dengan username dan password yang diberikan."""
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        raise ValueError("Username sudah digunakan")
+
+    password_hash = hash_password(password)
+    new_user = User(username=username, password_hash=password_hash, is_active=True)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return new_user
