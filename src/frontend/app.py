@@ -84,6 +84,18 @@ def rekap():
     """
     return render_template('pages/rekap.html')
 
+
+@app.route('/login')
+def login():
+    """Halaman login frontend."""
+    return render_template('pages/login.html')
+
+
+@app.route('/register')
+def register():
+    """Halaman registrasi frontend."""
+    return render_template('pages/register.html')
+
 # ====================================================
 # MENJALANKAN APLIKASI
 # ====================================================
