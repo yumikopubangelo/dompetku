@@ -12,6 +12,8 @@ class Pemasukan(db.Model):
 
     # Primary key auto increment.
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # Foreign key ke user yang mencatat pemasukan ini.
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     # Nominal pemasukan dengan presisi dua angka desimal.
     jumlah = db.Column(db.Numeric(15, 2), nullable=False)
     # Catatan tambahan transaksi (opsional).
@@ -25,6 +27,8 @@ class Pemasukan(db.Model):
 
     # Relasi ke model Kategori untuk kemudahan join dan akses object.
     kategori = db.relationship("Kategori", backref=db.backref("pemasukan", lazy=True))
+    # Relasi ke user.
+    user = db.relationship("User", backref=db.backref("pemasukan", lazy=True))
 
     def __repr__(self):
         """Memudahkan debugging saat objek pemasukan dicetak."""
