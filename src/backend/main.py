@@ -3,6 +3,7 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from sqlalchemy import inspect, text
 from config import DB_CONFIG, APP_PORT, APP_DEBUG, SECRET_KEY, db
 
 # Membuat instance aplikasi Flask.
@@ -45,6 +46,46 @@ app.register_blueprint(pengeluaran_bp, url_prefix="/api/pengeluaran")
 app.register_blueprint(rekap_bp, url_prefix="/api/rekap")
 app.register_blueprint(saldo_bp, url_prefix="/api/saldo")
 app.register_blueprint(statistik_bp, url_prefix="/api/statistik")
+
+
+def initialize_database():
+    """Memastikan seluruh tabel model tersedia sebelum request pertama diproses."""
+    with app.app_context():
+        # Import model di sini agar metadata SQLAlchemy lengkap saat create_all dieksekusi.
+        import models  # noqa: F401
+        db.create_all()
+
+
+initialize_database()
+
+
+def sync_legacy_schema():
+    """Menambahkan kolom wajib yang mungkin belum ada pada database lama."""
+    with app.app_context():
+        inspector = inspect(db.engine)
+        required_columns = {
+            "kategori": {"user_id"},
+            "pemasukan": {"user_id"},
+            "pengeluaran": {"user_id"},
+        }
+
+        for table_name, columns in required_columns.items():
+            if not inspector.has_table(table_name):
+                continue
+
+            existing_columns = {col["name"] for col in inspector.get_columns(table_name)}
+            missing_columns = columns - existing_columns
+
+            for column_name in missing_columns:
+                # Kompatibilitas untuk schema lama tanpa kolom multi-user.
+                db.session.execute(
+                    text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} INT NULL")
+                )
+
+        db.session.commit()
+
+
+sync_legacy_schema()
 
 
 @jwt.token_in_blocklist_loader
