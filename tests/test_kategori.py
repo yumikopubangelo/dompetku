@@ -38,6 +38,10 @@ def _build_kategori_client(flask_app):
 
 
 # ---------- Service tests ----------
+# Test user_id for all service calls
+TEST_USER_ID = 1
+
+
 def test_get_kategori_service_success(monkeypatch):
     rows = [
         SimpleNamespace(id=1, nama="Gaji", tipe="pemasukan", created_at="2026-02-01"),
@@ -48,9 +52,12 @@ def test_get_kategori_service_success(monkeypatch):
         def all(self):
             return rows
 
+        def filter_by(self, user_id=None):
+            return DummyQuery()
+
     monkeypatch.setattr(kategori_service, "Kategori", SimpleNamespace(query=DummyQuery()))
 
-    result = kategori_service.get_kategori()
+    result = kategori_service.get_kategori(TEST_USER_ID)
 
     assert len(result) == 2
     assert result[0]["nama"] == "Gaji"
@@ -62,9 +69,12 @@ def test_get_kategori_service_returns_empty_list_on_error(monkeypatch):
         def all(self):
             raise RuntimeError("database error")
 
+        def filter_by(self, user_id=None):
+            return DummyQuery()
+
     monkeypatch.setattr(kategori_service, "Kategori", SimpleNamespace(query=DummyQuery()))
 
-    assert kategori_service.get_kategori() == []
+    assert kategori_service.get_kategori(TEST_USER_ID) == []
 
 
 def test_create_kategori_service_success(monkeypatch):
@@ -73,16 +83,17 @@ def test_create_kategori_service_success(monkeypatch):
 
     # Dummy model meniru object ORM yang dibuat oleh service.
     class DummyKategori:
-        def __init__(self, nama, tipe):
+        def __init__(self, nama, tipe, user_id=None):
             self.id = 10
             self.nama = nama
             self.tipe = tipe
+            self.user_id = user_id
             self.created_at = "2026-02-10"
 
     monkeypatch.setattr(kategori_service, "Kategori", DummyKategori)
 
     payload = {"nama": "Bonus", "tipe": "pemasukan"}
-    result = kategori_service.create_kategori(payload)
+    result = kategori_service.create_kategori(payload, TEST_USER_ID)
 
     assert session.committed is True
     assert session.added[0].nama == "Bonus"
@@ -94,15 +105,16 @@ def test_create_kategori_service_rollback_on_error(monkeypatch):
     monkeypatch.setattr(kategori_service, "db", SimpleNamespace(session=session))
 
     class DummyKategori:
-        def __init__(self, nama, tipe):
+        def __init__(self, nama, tipe, user_id=None):
             self.id = 11
             self.nama = nama
             self.tipe = tipe
+            self.user_id = user_id
             self.created_at = "2026-02-10"
 
     monkeypatch.setattr(kategori_service, "Kategori", DummyKategori)
 
-    result = kategori_service.create_kategori({"nama": "Freelance", "tipe": "pemasukan"})
+    result = kategori_service.create_kategori({"nama": "Freelance", "tipe": "pemasukan"}, TEST_USER_ID)
 
     assert result is None
     assert session.rolled_back is True
@@ -112,14 +124,17 @@ def test_update_kategori_service_success(monkeypatch):
     current = SimpleNamespace(id=3, nama="Lama", tipe="pemasukan", created_at="2026-02-11")
 
     class DummyQuery:
-        def get(self, _id):
+        def filter_by(self, id=None, user_id=None):
+            return self
+
+        def first(self):
             return current
 
     session = SessionSpy()
     monkeypatch.setattr(kategori_service, "Kategori", SimpleNamespace(query=DummyQuery()))
     monkeypatch.setattr(kategori_service, "db", SimpleNamespace(session=session))
 
-    result = kategori_service.update_kategori(3, {"nama": "Baru", "tipe": "pengeluaran"})
+    result = kategori_service.update_kategori(3, {"nama": "Baru", "tipe": "pengeluaran"}, TEST_USER_ID)
 
     assert session.committed is True
     assert result["nama"] == "Baru"
@@ -128,14 +143,17 @@ def test_update_kategori_service_success(monkeypatch):
 
 def test_update_kategori_service_not_found(monkeypatch):
     class DummyQuery:
-        def get(self, _id):
+        def filter_by(self, id=None, user_id=None):
+            return self
+
+        def first(self):
             return None
 
     session = SessionSpy()
     monkeypatch.setattr(kategori_service, "Kategori", SimpleNamespace(query=DummyQuery()))
     monkeypatch.setattr(kategori_service, "db", SimpleNamespace(session=session))
 
-    assert kategori_service.update_kategori(99, {"nama": "Tidak Ada"}) is None
+    assert kategori_service.update_kategori(99, {"nama": "Tidak Ada"}, TEST_USER_ID) is None
     assert session.committed is False
 
 
@@ -143,28 +161,34 @@ def test_delete_kategori_service_success(monkeypatch):
     current = SimpleNamespace(id=4, nama="Transport", tipe="pengeluaran", created_at="2026-02-11")
 
     class DummyQuery:
-        def get(self, _id):
+        def filter_by(self, id=None, user_id=None):
+            return self
+
+        def first(self):
             return current
 
     session = SessionSpy()
     monkeypatch.setattr(kategori_service, "Kategori", SimpleNamespace(query=DummyQuery()))
     monkeypatch.setattr(kategori_service, "db", SimpleNamespace(session=session))
 
-    assert kategori_service.delete_kategori(4) is True
+    assert kategori_service.delete_kategori(4, TEST_USER_ID) is True
     assert session.committed is True
     assert session.deleted == [current]
 
 
 def test_delete_kategori_service_not_found(monkeypatch):
     class DummyQuery:
-        def get(self, _id):
+        def filter_by(self, id=None, user_id=None):
+            return self
+
+        def first(self):
             return None
 
     session = SessionSpy()
     monkeypatch.setattr(kategori_service, "Kategori", SimpleNamespace(query=DummyQuery()))
     monkeypatch.setattr(kategori_service, "db", SimpleNamespace(session=session))
 
-    assert kategori_service.delete_kategori(404) is False
+    assert kategori_service.delete_kategori(404, TEST_USER_ID) is False
     assert session.committed is False
 
 
@@ -172,7 +196,7 @@ def test_delete_kategori_service_not_found(monkeypatch):
 def test_get_kategori_route_returns_200(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.kategori as kategori_route
 
-    monkeypatch.setattr(kategori_route, "get_kategori", lambda: [{"id": 1, "nama": "Gaji"}])
+    monkeypatch.setattr(kategori_route, "get_kategori", lambda user_id: [{"id": 1, "nama": "Gaji"}])
     client = _build_kategori_client(flask_app)
 
     resp = client.get("/api/kategori/")
@@ -196,7 +220,7 @@ def test_create_kategori_route_returns_201(flask_app, bypass_jwt, monkeypatch):
     monkeypatch.setattr(
         kategori_route,
         "create_kategori",
-        lambda data: {"id": 5, "nama": data["nama"], "tipe": data["tipe"]},
+        lambda data, user_id: {"id": 5, "nama": data["nama"], "tipe": data["tipe"]},
     )
     client = _build_kategori_client(flask_app)
 
@@ -209,7 +233,7 @@ def test_create_kategori_route_returns_201(flask_app, bypass_jwt, monkeypatch):
 def test_update_kategori_route_returns_404_when_not_found(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.kategori as kategori_route
 
-    monkeypatch.setattr(kategori_route, "update_kategori", lambda _id, _data: None)
+    monkeypatch.setattr(kategori_route, "update_kategori", lambda _id, _data, _user_id: None)
     client = _build_kategori_client(flask_app)
 
     resp = client.put("/api/kategori/99", json={"nama": "Update"})
@@ -221,7 +245,7 @@ def test_update_kategori_route_returns_404_when_not_found(flask_app, bypass_jwt,
 def test_delete_kategori_route_returns_200(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.kategori as kategori_route
 
-    monkeypatch.setattr(kategori_route, "delete_kategori", lambda _id: True)
+    monkeypatch.setattr(kategori_route, "delete_kategori", lambda _id, _user_id: True)
     client = _build_kategori_client(flask_app)
 
     resp = client.delete("/api/kategori/7")
