@@ -5,6 +5,9 @@ from types import SimpleNamespace
 import pytest
 import src.backend.services.statistik_service as statistik_service
 
+# Test user_id for all service calls
+TEST_USER_ID = 1
+
 
 # Field palsu agar API `label()` bisa dipakai di ekspresi query SQLAlchemy.
 class LabelField:
@@ -126,7 +129,7 @@ def test_get_statistik_keuangan_service_success(monkeypatch):
     session = SequenceSession(queries)
     _patch_statistik_dependencies(monkeypatch, session)
 
-    result = statistik_service.get_statistik_keuangan(2026)
+    result = statistik_service.get_statistik_keuangan(2026, TEST_USER_ID)
 
     assert result["tahun"] == 2026
     assert result["total_pemasukan"] == "7800000"
@@ -157,7 +160,7 @@ def test_get_statistik_keuangan_service_uses_current_year_when_none(monkeypatch)
     _patch_statistik_dependencies(monkeypatch, session)
     monkeypatch.setattr(statistik_service, "datetime", FakeDatetime)
 
-    result = statistik_service.get_statistik_keuangan()
+    result = statistik_service.get_statistik_keuangan(None, TEST_USER_ID)
 
     assert result["tahun"] == 2031
 
@@ -170,7 +173,7 @@ def test_get_statistik_keuangan_service_raises_on_error(monkeypatch):
     _patch_statistik_dependencies(monkeypatch, BrokenSession())
 
     with pytest.raises(RuntimeError, match="query gagal"):
-        statistik_service.get_statistik_keuangan(2026)
+        statistik_service.get_statistik_keuangan(2026, TEST_USER_ID)
 
 
 # ---------- Route tests ----------
@@ -180,7 +183,7 @@ def test_get_statistik_route_returns_200(flask_app, bypass_jwt, monkeypatch):
     monkeypatch.setattr(
         statistik_route,
         "get_statistik_keuangan",
-        lambda tahun=None: {"tahun": tahun, "total_saldo": "100000"},
+        lambda tahun=None, user_id=None: {"tahun": tahun, "total_saldo": "100000"},
     )
     client = _build_statistik_client(flask_app)
 
@@ -195,7 +198,7 @@ def test_get_statistik_route_passes_none_when_no_year(flask_app, bypass_jwt, mon
 
     captured = {}
 
-    def _fake_service(tahun=None):
+    def _fake_service(tahun=None, user_id=None):
         captured["tahun"] = tahun
         return {"tahun": 2030}
 
@@ -220,7 +223,7 @@ def test_get_statistik_route_returns_500_on_invalid_year(flask_app, bypass_jwt):
 def test_get_statistik_route_returns_500_when_service_error(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.statistik as statistik_route
 
-    def _raise_error(_tahun=None):
+    def _raise_error(_tahun=None, _user_id=None):
         raise RuntimeError("service gagal")
 
     monkeypatch.setattr(statistik_route, "get_statistik_keuangan", _raise_error)

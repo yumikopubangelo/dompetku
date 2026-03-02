@@ -5,6 +5,9 @@ from types import SimpleNamespace
 import pytest
 import src.backend.services.saldo_service as saldo_service
 
+# Test user_id for all service calls
+TEST_USER_ID = 1
+
 
 # Query palsu untuk mengembalikan nilai aggregate scalar.
 class ScalarQuery:
@@ -51,7 +54,7 @@ def test_get_saldo_akhir_service_success(monkeypatch):
     monkeypatch.setattr(saldo_service, "Pemasukan", SimpleNamespace(jumlah="jumlah_pemasukan"))
     monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran"))
 
-    assert saldo_service.get_saldo_akhir() == 750000
+    assert saldo_service.get_saldo_akhir(TEST_USER_ID) == 750000
 
 
 def test_get_saldo_akhir_service_treats_none_as_zero(monkeypatch):
@@ -62,7 +65,7 @@ def test_get_saldo_akhir_service_treats_none_as_zero(monkeypatch):
     monkeypatch.setattr(saldo_service, "Pemasukan", SimpleNamespace(jumlah="jumlah_pemasukan"))
     monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran"))
 
-    assert saldo_service.get_saldo_akhir() == -125000
+    assert saldo_service.get_saldo_akhir(TEST_USER_ID) == -125000
 
 
 def test_get_saldo_akhir_service_raises_on_query_error(monkeypatch):
@@ -76,14 +79,14 @@ def test_get_saldo_akhir_service_raises_on_query_error(monkeypatch):
     monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran"))
 
     with pytest.raises(RuntimeError, match="query gagal"):
-        saldo_service.get_saldo_akhir()
+        saldo_service.get_saldo_akhir(TEST_USER_ID)
 
 
 # ---------- Route tests ----------
 def test_get_saldo_route_returns_200(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.saldo as saldo_route
 
-    monkeypatch.setattr(saldo_route, "get_saldo_akhir", lambda: 888000)
+    monkeypatch.setattr(saldo_route, "get_saldo_akhir", lambda user_id: 888000)
     client = _build_saldo_client(flask_app)
 
     resp = client.get("/api/saldo/")
@@ -95,7 +98,7 @@ def test_get_saldo_route_returns_200(flask_app, bypass_jwt, monkeypatch):
 def test_get_saldo_route_returns_500_when_service_error(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.saldo as saldo_route
 
-    def _raise_error():
+    def _raise_error(user_id):
         raise RuntimeError("service gagal")
 
     monkeypatch.setattr(saldo_route, "get_saldo_akhir", _raise_error)
