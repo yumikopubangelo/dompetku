@@ -1,4 +1,4 @@
-name: CI - Backend Dompetku
+name: CI - Dompetku
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ main, development ]
 
 jobs:
-  test-backend:
-    name: Run Backend Tests
+  test-suite:
+    name: Run Test Suite
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +25,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run unit tests
+      - name: Run backend tests
         run: |
-          python -m pytest tests/ -v
+          python -m pytest tests/ -v -k "not frontend_pages"
+
+      - name: Run frontend page tests
+        run: |
+          python -m pytest tests/test_frontend_pages.py -v
