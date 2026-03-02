@@ -4,6 +4,9 @@ from types import SimpleNamespace
 
 import src.backend.services.pemasukan_service as pemasukan_service
 
+# Test user_id for all service calls
+TEST_USER_ID = 1
+
 
 # Spy session untuk memverifikasi add/commit/delete/rollback pada service.
 class SessionSpy:
@@ -54,9 +57,12 @@ def test_get_pemasukan_service_success(monkeypatch):
         def all(self):
             return rows
 
+        def filter_by(self, user_id=None):
+            return DummyQuery()
+
     monkeypatch.setattr(pemasukan_service, "Pemasukan", SimpleNamespace(query=DummyQuery()))
 
-    result = pemasukan_service.get_pemasukan()
+    result = pemasukan_service.get_pemasukan(TEST_USER_ID)
 
     assert len(result) == 1
     assert result[0]["jumlah"] == "1500000"
@@ -68,9 +74,12 @@ def test_get_pemasukan_service_returns_empty_list_on_error(monkeypatch):
         def all(self):
             raise RuntimeError("database error")
 
+        def filter_by(self, user_id=None):
+            return DummyQuery()
+
     monkeypatch.setattr(pemasukan_service, "Pemasukan", SimpleNamespace(query=DummyQuery()))
 
-    assert pemasukan_service.get_pemasukan() == []
+    assert pemasukan_service.get_pemasukan(TEST_USER_ID) == []
 
 
 def test_create_pemasukan_service_success(monkeypatch):
@@ -78,18 +87,19 @@ def test_create_pemasukan_service_success(monkeypatch):
     monkeypatch.setattr(pemasukan_service, "db", SimpleNamespace(session=session))
 
     class DummyPemasukan:
-        def __init__(self, jumlah, deskripsi=None, kategori_id=None, tanggal=None):
+        def __init__(self, jumlah, deskripsi=None, kategori_id=None, tanggal=None, user_id=None):
             self.id = 10
             self.jumlah = jumlah
             self.deskripsi = deskripsi
             self.kategori_id = kategori_id
             self.tanggal = tanggal
+            self.user_id = user_id
             self.created_at = "2026-02-01"
 
     monkeypatch.setattr(pemasukan_service, "Pemasukan", DummyPemasukan)
 
     payload = {"jumlah": 500000, "deskripsi": "Freelance", "kategori_id": 2, "tanggal": "2026-02-01"}
-    result = pemasukan_service.create_pemasukan(payload)
+    result = pemasukan_service.create_pemasukan(payload, TEST_USER_ID)
 
     assert session.committed is True
     assert result["id"] == 10
@@ -101,17 +111,18 @@ def test_create_pemasukan_service_rollback_on_error(monkeypatch):
     monkeypatch.setattr(pemasukan_service, "db", SimpleNamespace(session=session))
 
     class DummyPemasukan:
-        def __init__(self, jumlah, deskripsi=None, kategori_id=None, tanggal=None):
+        def __init__(self, jumlah, deskripsi=None, kategori_id=None, tanggal=None, user_id=None):
             self.id = 11
             self.jumlah = jumlah
             self.deskripsi = deskripsi
             self.kategori_id = kategori_id
             self.tanggal = tanggal
+            self.user_id = user_id
             self.created_at = "2026-02-02"
 
     monkeypatch.setattr(pemasukan_service, "Pemasukan", DummyPemasukan)
 
-    result = pemasukan_service.create_pemasukan({"jumlah": 1000, "tanggal": "2026-02-01"})
+    result = pemasukan_service.create_pemasukan({"jumlah": 1000, "tanggal": "2026-02-01"}, TEST_USER_ID)
 
     assert result is None
     assert session.rolled_back is True
@@ -128,7 +139,10 @@ def test_update_pemasukan_service_success(monkeypatch):
     )
 
     class DummyQuery:
-        def get(self, _id):
+        def filter_by(self, id=None, user_id=None):
+            return self
+
+        def first(self):
             return current
 
     session = SessionSpy()
@@ -138,6 +152,7 @@ def test_update_pemasukan_service_success(monkeypatch):
     result = pemasukan_service.update_pemasukan(
         8,
         {"jumlah": 250000, "deskripsi": "Baru", "kategori_id": 4, "tanggal": "2026-02-02"},
+        TEST_USER_ID,
     )
 
     assert session.committed is True
@@ -147,14 +162,17 @@ def test_update_pemasukan_service_success(monkeypatch):
 
 def test_update_pemasukan_service_not_found(monkeypatch):
     class DummyQuery:
-        def get(self, _id):
+        def filter_by(self, id=None, user_id=None):
+            return self
+
+        def first(self):
             return None
 
     session = SessionSpy()
     monkeypatch.setattr(pemasukan_service, "Pemasukan", SimpleNamespace(query=DummyQuery()))
     monkeypatch.setattr(pemasukan_service, "db", SimpleNamespace(session=session))
 
-    assert pemasukan_service.update_pemasukan(404, {"jumlah": 1}) is None
+    assert pemasukan_service.update_pemasukan(404, {"jumlah": 1}, TEST_USER_ID) is None
     assert session.committed is False
 
 
@@ -162,28 +180,34 @@ def test_delete_pemasukan_service_success(monkeypatch):
     current = SimpleNamespace(id=2)
 
     class DummyQuery:
-        def get(self, _id):
+        def filter_by(self, id=None, user_id=None):
+            return self
+
+        def first(self):
             return current
 
     session = SessionSpy()
     monkeypatch.setattr(pemasukan_service, "Pemasukan", SimpleNamespace(query=DummyQuery()))
     monkeypatch.setattr(pemasukan_service, "db", SimpleNamespace(session=session))
 
-    assert pemasukan_service.delete_pemasukan(2) is True
+    assert pemasukan_service.delete_pemasukan(2, TEST_USER_ID) is True
     assert session.deleted == [current]
     assert session.committed is True
 
 
 def test_delete_pemasukan_service_not_found(monkeypatch):
     class DummyQuery:
-        def get(self, _id):
+        def filter_by(self, id=None, user_id=None):
+            return self
+
+        def first(self):
             return None
 
     session = SessionSpy()
     monkeypatch.setattr(pemasukan_service, "Pemasukan", SimpleNamespace(query=DummyQuery()))
     monkeypatch.setattr(pemasukan_service, "db", SimpleNamespace(session=session))
 
-    assert pemasukan_service.delete_pemasukan(999) is False
+    assert pemasukan_service.delete_pemasukan(999, TEST_USER_ID) is False
     assert session.committed is False
 
 
@@ -191,7 +215,7 @@ def test_delete_pemasukan_service_not_found(monkeypatch):
 def test_get_pemasukan_route_returns_200(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.pemasukan as pemasukan_route
 
-    monkeypatch.setattr(pemasukan_route, "get_pemasukan", lambda: [{"id": 1, "jumlah": "100"}])
+    monkeypatch.setattr(pemasukan_route, "get_pemasukan", lambda user_id: [{"id": 1, "jumlah": "100"}])
     client = _build_pemasukan_client(flask_app)
 
     resp = client.get("/api/pemasukan/")
@@ -215,7 +239,7 @@ def test_create_pemasukan_route_returns_201(flask_app, bypass_jwt, monkeypatch):
     monkeypatch.setattr(
         pemasukan_route,
         "create_pemasukan",
-        lambda data: {"id": 9, "jumlah": str(data["jumlah"]), "tanggal": data["tanggal"]},
+        lambda data, user_id: {"id": 9, "jumlah": str(data["jumlah"]), "tanggal": data["tanggal"]},
     )
     client = _build_pemasukan_client(flask_app)
 
@@ -228,7 +252,7 @@ def test_create_pemasukan_route_returns_201(flask_app, bypass_jwt, monkeypatch):
 def test_update_pemasukan_route_returns_404_when_not_found(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.pemasukan as pemasukan_route
 
-    monkeypatch.setattr(pemasukan_route, "update_pemasukan", lambda _id, _data: None)
+    monkeypatch.setattr(pemasukan_route, "update_pemasukan", lambda _id, _data, _user_id: None)
     client = _build_pemasukan_client(flask_app)
 
     resp = client.put("/api/pemasukan/123", json={"jumlah": 1000})
@@ -240,7 +264,7 @@ def test_update_pemasukan_route_returns_404_when_not_found(flask_app, bypass_jwt
 def test_delete_pemasukan_route_returns_200(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.pemasukan as pemasukan_route
 
-    monkeypatch.setattr(pemasukan_route, "delete_pemasukan", lambda _id: True)
+    monkeypatch.setattr(pemasukan_route, "delete_pemasukan", lambda _id, _user_id: True)
     client = _build_pemasukan_client(flask_app)
 
     resp = client.delete("/api/pemasukan/10")
