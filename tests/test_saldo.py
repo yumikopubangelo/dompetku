@@ -17,6 +17,10 @@ class ScalarQuery:
     def scalar(self):
         return self.value
 
+    def filter(self, *args, **kwargs):
+        # Return self to support .filter().scalar() chain
+        return self
+
 
 # Session palsu yang mengeluarkan hasil query secara berurutan.
 class SequenceSession:
@@ -51,8 +55,8 @@ def test_get_saldo_akhir_service_success(monkeypatch):
     fake_db = SimpleNamespace(session=session, func=DummyFunc())
 
     monkeypatch.setattr(saldo_service, "db", fake_db)
-    monkeypatch.setattr(saldo_service, "Pemasukan", SimpleNamespace(jumlah="jumlah_pemasukan"))
-    monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran"))
+    monkeypatch.setattr(saldo_service, "Pemasukan", SimpleNamespace(jumlah="jumlah_pemasukan", user_id=1))
+    monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran", user_id=1))
 
     assert saldo_service.get_saldo_akhir(TEST_USER_ID) == 750000
 
@@ -62,8 +66,8 @@ def test_get_saldo_akhir_service_treats_none_as_zero(monkeypatch):
     fake_db = SimpleNamespace(session=session, func=DummyFunc())
 
     monkeypatch.setattr(saldo_service, "db", fake_db)
-    monkeypatch.setattr(saldo_service, "Pemasukan", SimpleNamespace(jumlah="jumlah_pemasukan"))
-    monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran"))
+    monkeypatch.setattr(saldo_service, "Pemasukan", SimpleNamespace(jumlah="jumlah_pemasukan", user_id=1))
+    monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran", user_id=1))
 
     assert saldo_service.get_saldo_akhir(TEST_USER_ID) == -125000
 
@@ -75,8 +79,8 @@ def test_get_saldo_akhir_service_raises_on_query_error(monkeypatch):
 
     fake_db = SimpleNamespace(session=BrokenSession(), func=DummyFunc())
     monkeypatch.setattr(saldo_service, "db", fake_db)
-    monkeypatch.setattr(saldo_service, "Pemasukan", SimpleNamespace(jumlah="jumlah_pemasukan"))
-    monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran"))
+    monkeypatch.setattr(saldo_service, "Pemasukan", SimpleNamespace(jumlah="jumlah_pemasukan", user_id=1))
+    monkeypatch.setattr(saldo_service, "Pengeluaran", SimpleNamespace(jumlah="jumlah_pengeluaran", user_id=1))
 
     with pytest.raises(RuntimeError, match="query gagal"):
         saldo_service.get_saldo_akhir(TEST_USER_ID)

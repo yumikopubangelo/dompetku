@@ -5,6 +5,7 @@ import sys
 
 import pytest
 from flask import Flask
+from flask_jwt_extended import JWTManager, create_access_token
 
 
 # Pastikan folder `src/backend` bisa di-import sebagai module Python saat test berjalan.
@@ -19,35 +20,25 @@ def flask_app():
     app = Flask(__name__)
     app.config["TESTING"] = True
     app.config["JWT_SECRET_KEY"] = "test-secret"
+    app.config["JWT_TOKEN_LOCATION"] = ["headers"]
+    JWTManager(app)
     return app
 
 
 @pytest.fixture
 def bypass_jwt(monkeypatch):
     """Menonaktifkan verifikasi JWT agar route bisa diuji sebagai unit test."""
-    # Patch both verify_jwt_in_request and get_jwt_identity
-    import flask_jwt_extended
-    from flask import globals as flask_globals
+    from unittest.mock import MagicMock
     
-    # Mock verify_jwt_in_request to do nothing
-    monkeypatch.setattr(
-        flask_jwt_extended.view_decorators,
-        "verify_jwt_in_request",
-        lambda *args, **kwargs: None,
-    )
+    # Mock get_jwt to return a mock JWT with identity
+    mock_jwt = MagicMock()
+    mock_jwt.get.return_value = 1  # Return user_id for 'sub' claim
     
-    # Also need to mock get_jwt to return a mock JWT data
-    class MockJWT:
-        def get(self, key, default=None):
-            if key == "sub":
-                return 1  # Return user_id
-            return default
+    # Patch verify_jwt_in_request to be a no-op
+    import flask_jwt_extended.view_decorators as decorators
+    monkeypatch.setattr(decorators, "verify_jwt_in_request", lambda *a, **kw: None)
     
-    def mock_get_jwt():
-        return MockJWT()
-    
-    monkeypatch.setattr(
-        flask_jwt_extended.utils,
-        "get_jwt",
-        mock_get_jwt,
-    )
+    # Also patch get_jwt and get_jwt_identity
+    import flask_jwt_extended.utils as utils
+    monkeypatch.setattr(utils, "get_jwt_identity", lambda: 1)
+    monkeypatch.setattr(utils, "get_jwt", lambda: mock_jwt)
