@@ -1,7 +1,7 @@
 ﻿"""Route API untuk fitur rekap bulanan."""
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.rekap_service import get_rekap_bulanan
 
 # Blueprint rekap, akan di-mount dengan prefix `/api/rekap`.
@@ -21,8 +21,9 @@ def get_rekap_bulanan_route():
         return jsonify({"error": "Parameter bulan dan tahun wajib disediakan"}), 400
 
     try:
+        user_id = get_jwt_identity()
         # Konversi parameter ke integer sebelum diproses service.
-        rekap = get_rekap_bulanan(int(bulan), int(tahun))
+        rekap = get_rekap_bulanan(int(bulan), int(tahun), user_id)
         return jsonify(rekap), 200
     except Exception as e:
         # Error runtime dikembalikan sebagai respons 500.

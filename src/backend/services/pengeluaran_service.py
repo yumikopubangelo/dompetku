@@ -4,10 +4,13 @@ from models.pengeluaran import Pengeluaran
 from config import db
 
 
-def get_pengeluaran():
-    """Mengambil semua data pengeluaran."""
+def get_pengeluaran(user_id):
+    """Mengambil semua data pengeluaran berdasarkan user_id."""
     try:
-        pengeluaran = Pengeluaran.query.all()
+        if user_id:
+            pengeluaran = Pengeluaran.query.filter_by(user_id=user_id).all()
+        else:
+            pengeluaran = Pengeluaran.query.filter_by(user_id=None).all()
         # Ubah object ORM menjadi dict untuk response JSON.
         return [
             {
@@ -25,7 +28,7 @@ def get_pengeluaran():
         return []
 
 
-def create_pengeluaran(data):
+def create_pengeluaran(data, user_id):
     """Membuat transaksi pengeluaran baru."""
     try:
         # Ambil field wajib dan opsional dari payload.
@@ -34,6 +37,7 @@ def create_pengeluaran(data):
             deskripsi=data.get("deskripsi"),
             kategori_id=data.get("kategori_id"),
             tanggal=data["tanggal"],
+            user_id=user_id,
         )
         db.session.add(new_pengeluaran)
         db.session.commit()
@@ -52,10 +56,10 @@ def create_pengeluaran(data):
         return None
 
 
-def update_pengeluaran(id, data):
+def update_pengeluaran(id, data, user_id):
     """Memperbarui transaksi pengeluaran berdasarkan ID."""
     try:
-        pengeluaran = Pengeluaran.query.get(id)
+        pengeluaran = Pengeluaran.query.filter_by(id=id, user_id=user_id).first()
         if not pengeluaran:
             return None
 
@@ -84,10 +88,10 @@ def update_pengeluaran(id, data):
         return None
 
 
-def delete_pengeluaran(id):
+def delete_pengeluaran(id, user_id):
     """Menghapus transaksi pengeluaran berdasarkan ID."""
     try:
-        pengeluaran = Pengeluaran.query.get(id)
+        pengeluaran = Pengeluaran.query.filter_by(id=id, user_id=user_id).first()
         if not pengeluaran:
             return False
 

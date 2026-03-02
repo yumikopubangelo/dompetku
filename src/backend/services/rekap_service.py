@@ -6,8 +6,8 @@ from models.kategori import Kategori
 from config import db
 
 
-def get_rekap_bulanan(bulan, tahun):
-    """Menghasilkan ringkasan pemasukan/pengeluaran per bulan dan per kategori."""
+def get_rekap_bulanan(bulan, tahun, user_id):
+    """Menghasilkan ringkasan pemasukan/pengeluaran per bulan dan per kategori berdasarkan user_id."""
     try:
         # Query total pemasukan per kategori pada bulan-tahun yang diminta.
         pemasukan_per_kategori = (
@@ -20,6 +20,7 @@ def get_rekap_bulanan(bulan, tahun):
                 db.func.month(Pemasukan.tanggal) == bulan,
                 db.func.year(Pemasukan.tanggal) == tahun,
                 Kategori.tipe == "pemasukan",
+                Kategori.user_id == user_id,
             )
             .group_by(Kategori.nama)
             .all()
@@ -36,6 +37,7 @@ def get_rekap_bulanan(bulan, tahun):
                 db.func.month(Pengeluaran.tanggal) == bulan,
                 db.func.year(Pengeluaran.tanggal) == tahun,
                 Kategori.tipe == "pengeluaran",
+                Kategori.user_id == user_id,
             )
             .group_by(Kategori.nama)
             .all()
@@ -44,14 +46,22 @@ def get_rekap_bulanan(bulan, tahun):
         # Total pemasukan dan pengeluaran untuk bulan yang sama.
         total_pemasukan = (
             db.session.query(db.func.sum(Pemasukan.jumlah))
-            .filter(db.func.month(Pemasukan.tanggal) == bulan, db.func.year(Pemasukan.tanggal) == tahun)
+            .filter(
+                db.func.month(Pemasukan.tanggal) == bulan, 
+                db.func.year(Pemasukan.tanggal) == tahun,
+                Pemasukan.user_id == user_id
+            )
             .scalar()
             or 0
         )
 
         total_pengeluaran = (
             db.session.query(db.func.sum(Pengeluaran.jumlah))
-            .filter(db.func.month(Pengeluaran.tanggal) == bulan, db.func.year(Pengeluaran.tanggal) == tahun)
+            .filter(
+                db.func.month(Pengeluaran.tanggal) == bulan, 
+                db.func.year(Pengeluaran.tanggal) == tahun,
+                Pengeluaran.user_id == user_id
+            )
             .scalar()
             or 0
         )

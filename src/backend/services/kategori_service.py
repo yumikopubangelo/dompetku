@@ -4,10 +4,13 @@ from models.kategori import Kategori
 from config import db
 
 
-def get_kategori():
-    """Mengambil seluruh kategori dari database."""
+def get_kategori(user_id):
+    """Mengambil seluruh kategori dari database berdasarkan user_id."""
     try:
-        kategori = Kategori.query.all()
+        if user_id:
+            kategori = Kategori.query.filter_by(user_id=user_id).all()
+        else:
+            kategori = Kategori.query.filter_by(user_id=None).all()
         # Mapping objek ORM menjadi dict agar siap dijadikan JSON response.
         return [{"id": k.id, "nama": k.nama, "tipe": k.tipe, "created_at": k.created_at} for k in kategori]
     except Exception as e:
@@ -15,11 +18,11 @@ def get_kategori():
         return []
 
 
-def create_kategori(data):
+def create_kategori(data, user_id):
     """Membuat kategori baru."""
     try:
         # Membangun objek model dari payload request.
-        new_kategori = Kategori(nama=data["nama"], tipe=data["tipe"])
+        new_kategori = Kategori(nama=data["nama"], tipe=data["tipe"], user_id=user_id)
         db.session.add(new_kategori)
         db.session.commit()
 
@@ -36,10 +39,10 @@ def create_kategori(data):
         return None
 
 
-def update_kategori(id, data):
+def update_kategori(id, data, user_id):
     """Memperbarui kategori berdasarkan ID."""
     try:
-        kategori = Kategori.query.get(id)
+        kategori = Kategori.query.filter_by(id=id, user_id=user_id).first()
         if not kategori:
             return None
 
@@ -62,10 +65,10 @@ def update_kategori(id, data):
         return None
 
 
-def delete_kategori(id):
+def delete_kategori(id, user_id):
     """Menghapus kategori berdasarkan ID."""
     try:
-        kategori = Kategori.query.get(id)
+        kategori = Kategori.query.filter_by(id=id, user_id=user_id).first()
         if not kategori:
             return False
 
