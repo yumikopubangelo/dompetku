@@ -4,7 +4,47 @@ Dokumen ini menjelaskan cara menggunakan API Dompetku.
 Saat ini frontend belum terisi, jadi interaksi dilakukan via HTTP client
 (Postman, Insomnia, curl, atau aplikasi frontend sendiri).
 
-## 1. Cek API Aktif
+## 1. Login
+
+Sebelum menggunakan endpoint API lain, user harus login terlebih dahulu untuk mendapatkan JWT token.
+
+Endpoint:
+
+```http
+POST /api/auth/login
+```
+
+Payload:
+
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+Response (sukses):
+
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "user_id": 1
+}
+```
+
+**Catatan:** Simpan `access_token` untuk mengakses endpoint lain, dan `refresh_token` untuk memperbarui token yang habis masa berlakunya.
+
+## 2. Header Wajib Untuk Endpoint API
+
+Semua endpoint `/api/*` (kecuali login) membutuhkan JWT token di header:
+
+```http
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+## 3. Health Check
 
 Request:
 
@@ -18,21 +58,12 @@ Response:
 Dompetku API is running!
 ```
 
-## 2. Header Wajib Untuk Endpoint API
+## 4. Kelola Kategori
 
-Semua endpoint `/api/*` butuh JWT.
-
-```http
-Authorization: Bearer <token>
-Content-Type: application/json
-```
-
-## 3. Kelola Kategori
-
-- `GET /api/kategori/`
-- `POST /api/kategori/`
-- `PUT /api/kategori/<id>`
-- `DELETE /api/kategori/<id>`
+- `GET /api/kategori/` - Ambil semua kategori
+- `POST /api/kategori/` - Tambah kategori baru
+- `PUT /api/kategori/<id>` - Update kategori
+- `DELETE /api/kategori/<id>` - Hapus kategori
 
 Contoh tambah kategori:
 
@@ -43,12 +74,12 @@ Contoh tambah kategori:
 }
 ```
 
-## 4. Kelola Pemasukan
+## 5. Kelola Pemasukan
 
-- `GET /api/pemasukan/`
-- `POST /api/pemasukan/`
-- `PUT /api/pemasukan/<id>`
-- `DELETE /api/pemasukan/<id>`
+- `GET /api/pemasukan/` - Ambil semua pemasukan
+- `POST /api/pemasukan/` - Tambah pemasukan baru
+- `PUT /api/pemasukan/<id>` - Update pemasukan
+- `DELETE /api/pemasukan/<id>` - Hapus pemasukan
 
 Contoh tambah pemasukan:
 
@@ -61,12 +92,12 @@ Contoh tambah pemasukan:
 }
 ```
 
-## 5. Kelola Pengeluaran
+## 6. Kelola Pengeluaran
 
-- `GET /api/pengeluaran/`
-- `POST /api/pengeluaran/`
-- `PUT /api/pengeluaran/<id>`
-- `DELETE /api/pengeluaran/<id>`
+- `GET /api/pengeluaran/` - Ambil semua pengeluaran
+- `POST /api/pengeluaran/` - Tambah pengeluaran baru
+- `PUT /api/pengeluaran/<id>` - Update pengeluaran
+- `DELETE /api/pengeluaran/<id>` - Hapus pengeluaran
 
 Contoh tambah pengeluaran:
 
@@ -79,7 +110,7 @@ Contoh tambah pengeluaran:
 }
 ```
 
-## 6. Lihat Saldo
+## 7. Lihat Saldo
 
 Endpoint:
 
@@ -95,7 +126,7 @@ Contoh response:
 }
 ```
 
-## 7. Rekap Bulanan
+## 8. Rekap Bulanan
 
 Endpoint:
 
@@ -106,7 +137,7 @@ GET /api/rekap/bulanan?bulan=2&tahun=2026
 Response berisi total pemasukan, total pengeluaran, saldo akhir, dan rincian
 per kategori.
 
-## 8. Statistik Tahunan
+## 9. Statistik Tahunan
 
 Endpoint:
 
@@ -116,7 +147,30 @@ GET /api/statistik/?tahun=2026
 
 Jika parameter `tahun` tidak dikirim, backend memakai tahun berjalan.
 
-## 9. Catatan Penting
+## 10. Logout
 
-- Endpoint auth/login JWT belum tersedia di repository saat ini.
+Endpoint:
+
+```http
+POST /api/auth/logout
+```
+
+Header:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Response:
+
+```json
+{
+  "message": "Token has been revoked"
+}
+```
+
+## 11. Catatan Penting
+
 - Nilai uang dikembalikan sebagai string untuk konsistensi serialisasi.
+- Semua transaksi (pemasukan/pengeluaran) dapat dikaitkan dengan kategori untuk memudahkan rekap.
+- Login diperlukan sebelum mengakses endpoint yang membutuhkan autentikasi.
