@@ -1,7 +1,7 @@
 ﻿"""Route API untuk fitur kategori."""
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.kategori_service import get_kategori, create_kategori, update_kategori, delete_kategori
 
 # Blueprint kategori, akan di-mount dengan prefix `/api/kategori`.
@@ -12,7 +12,8 @@ kategori_bp = Blueprint("kategori", __name__)
 @jwt_required()
 def get_kategori_route():
     """Mengambil seluruh data kategori."""
-    return jsonify(get_kategori()), 200
+    user_id = get_jwt_identity()
+    return jsonify(get_kategori(user_id)), 200
 
 
 @kategori_bp.route("/", methods=["POST"])
@@ -23,7 +24,8 @@ def create_kategori_route():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    kategori = create_kategori(data)
+    user_id = get_jwt_identity()
+    kategori = create_kategori(data, user_id)
     return jsonify(kategori), 201
 
 
@@ -35,7 +37,8 @@ def update_kategori_route(id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    kategori = update_kategori(id, data)
+    user_id = get_jwt_identity()
+    kategori = update_kategori(id, data, user_id)
     if kategori:
         return jsonify(kategori), 200
 
@@ -46,7 +49,8 @@ def update_kategori_route(id):
 @jwt_required()
 def delete_kategori_route(id):
     """Menghapus kategori berdasarkan ID."""
-    success = delete_kategori(id)
+    user_id = get_jwt_identity()
+    success = delete_kategori(id, user_id)
     if success:
         return jsonify({"message": "Kategori deleted successfully"}), 200
 

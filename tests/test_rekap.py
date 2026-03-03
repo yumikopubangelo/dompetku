@@ -5,6 +5,9 @@ from types import SimpleNamespace
 import pytest
 import src.backend.services.rekap_service as rekap_service
 
+# Test user_id for all service calls
+TEST_USER_ID = 1
+
 
 # Field palsu agar ekspresi `label()` pada query bisa dipanggil.
 class LabelField:
@@ -85,16 +88,16 @@ def test_get_rekap_bulanan_service_success(monkeypatch):
     )
 
     fake_db = SimpleNamespace(session=session, func=FakeFunc())
-    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan")
-    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
-    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
+    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan", user_id=1)
+    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
+    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
 
     monkeypatch.setattr(rekap_service, "db", fake_db)
     monkeypatch.setattr(rekap_service, "Kategori", fake_kategori)
     monkeypatch.setattr(rekap_service, "Pemasukan", fake_pemasukan)
     monkeypatch.setattr(rekap_service, "Pengeluaran", fake_pengeluaran)
 
-    result = rekap_service.get_rekap_bulanan(2, 2026)
+    result = rekap_service.get_rekap_bulanan(2, 2026, TEST_USER_ID)
 
     assert result["bulan"] == 2
     assert result["tahun"] == 2026
@@ -111,9 +114,9 @@ def test_get_rekap_bulanan_service_raises_on_query_error(monkeypatch):
             raise RuntimeError("query gagal")
 
     fake_db = SimpleNamespace(session=BrokenSession(), func=FakeFunc())
-    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan")
-    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
-    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id")
+    fake_kategori = SimpleNamespace(id=1, nama=LabelField(), tipe="pemasukan", user_id=1)
+    fake_pemasukan = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
+    fake_pengeluaran = SimpleNamespace(jumlah="jumlah", tanggal="tanggal", kategori_id="kategori_id", user_id=1)
 
     monkeypatch.setattr(rekap_service, "db", fake_db)
     monkeypatch.setattr(rekap_service, "Kategori", fake_kategori)
@@ -121,7 +124,7 @@ def test_get_rekap_bulanan_service_raises_on_query_error(monkeypatch):
     monkeypatch.setattr(rekap_service, "Pengeluaran", fake_pengeluaran)
 
     with pytest.raises(RuntimeError, match="query gagal"):
-        rekap_service.get_rekap_bulanan(2, 2026)
+        rekap_service.get_rekap_bulanan(2, 2026, TEST_USER_ID)
 
 
 # ---------- Route tests ----------
@@ -140,7 +143,7 @@ def test_get_rekap_bulanan_route_returns_200(flask_app, bypass_jwt, monkeypatch)
     monkeypatch.setattr(
         rekap_route,
         "get_rekap_bulanan",
-        lambda bulan, tahun: {"bulan": bulan, "tahun": tahun, "saldo_akhir": "100000"},
+        lambda bulan, tahun, user_id: {"bulan": bulan, "tahun": tahun, "saldo_akhir": "100000"},
     )
     client = _build_rekap_client(flask_app)
 
@@ -162,7 +165,7 @@ def test_get_rekap_bulanan_route_returns_500_on_invalid_number(flask_app, bypass
 def test_get_rekap_bulanan_route_returns_500_when_service_error(flask_app, bypass_jwt, monkeypatch):
     import src.backend.routes.rekap as rekap_route
 
-    def _raise_error(_bulan, _tahun):
+    def _raise_error(_bulan, _tahun, _user_id):
         raise RuntimeError("service gagal")
 
     monkeypatch.setattr(rekap_route, "get_rekap_bulanan", _raise_error)

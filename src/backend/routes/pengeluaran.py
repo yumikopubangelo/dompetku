@@ -1,7 +1,7 @@
 ﻿"""Route API untuk fitur pengeluaran."""
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.pengeluaran_service import get_pengeluaran, create_pengeluaran, update_pengeluaran, delete_pengeluaran
 
 # Blueprint pengeluaran, akan di-mount dengan prefix `/api/pengeluaran`.
@@ -12,7 +12,8 @@ pengeluaran_bp = Blueprint("pengeluaran", __name__)
 @jwt_required()
 def get_pengeluaran_route():
     """Mengambil seluruh transaksi pengeluaran."""
-    return jsonify(get_pengeluaran()), 200
+    user_id = get_jwt_identity()
+    return jsonify(get_pengeluaran(user_id)), 200
 
 
 @pengeluaran_bp.route("/", methods=["POST"])
@@ -23,7 +24,8 @@ def create_pengeluaran_route():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    pengeluaran = create_pengeluaran(data)
+    user_id = get_jwt_identity()
+    pengeluaran = create_pengeluaran(data, user_id)
     return jsonify(pengeluaran), 201
 
 
@@ -35,7 +37,8 @@ def update_pengeluaran_route(id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    pengeluaran = update_pengeluaran(id, data)
+    user_id = get_jwt_identity()
+    pengeluaran = update_pengeluaran(id, data, user_id)
     if pengeluaran:
         return jsonify(pengeluaran), 200
 
@@ -46,7 +49,8 @@ def update_pengeluaran_route(id):
 @jwt_required()
 def delete_pengeluaran_route(id):
     """Menghapus transaksi pengeluaran berdasarkan ID."""
-    success = delete_pengeluaran(id)
+    user_id = get_jwt_identity()
+    success = delete_pengeluaran(id, user_id)
     if success:
         return jsonify({"message": "Pengeluaran deleted successfully"}), 200
 

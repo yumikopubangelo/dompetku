@@ -1,7 +1,7 @@
 ﻿"""Route API untuk fitur pemasukan."""
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.pemasukan_service import get_pemasukan, create_pemasukan, update_pemasukan, delete_pemasukan
 
 # Blueprint pemasukan, akan di-mount dengan prefix `/api/pemasukan`.
@@ -12,7 +12,8 @@ pemasukan_bp = Blueprint("pemasukan", __name__)
 @jwt_required()
 def get_pemasukan_route():
     """Mengambil seluruh transaksi pemasukan."""
-    return jsonify(get_pemasukan()), 200
+    user_id = get_jwt_identity()
+    return jsonify(get_pemasukan(user_id)), 200
 
 
 @pemasukan_bp.route("/", methods=["POST"])
@@ -23,7 +24,8 @@ def create_pemasukan_route():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    pemasukan = create_pemasukan(data)
+    user_id = get_jwt_identity()
+    pemasukan = create_pemasukan(data, user_id)
     return jsonify(pemasukan), 201
 
 
@@ -35,7 +37,8 @@ def update_pemasukan_route(id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    pemasukan = update_pemasukan(id, data)
+    user_id = get_jwt_identity()
+    pemasukan = update_pemasukan(id, data, user_id)
     if pemasukan:
         return jsonify(pemasukan), 200
 
@@ -46,7 +49,8 @@ def update_pemasukan_route(id):
 @jwt_required()
 def delete_pemasukan_route(id):
     """Menghapus transaksi pemasukan berdasarkan ID."""
-    success = delete_pemasukan(id)
+    user_id = get_jwt_identity()
+    success = delete_pemasukan(id, user_id)
     if success:
         return jsonify({"message": "Pemasukan deleted successfully"}), 200
 
